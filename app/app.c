@@ -21,7 +21,10 @@ void app_task() {
     frame_t frame;
 
     if (uart_read_char((char*)&byte)) {
+        uart_write_string("RB\r\n");
+		uart_write_string(byte);
         if (frame_parse_byte(byte, &frame)) {
+           uart_write_string("FOK\r\n");
 			// Khi một khung dữ liệu hợp lệ được nhận, xử lý lệnh dựa trên cmd và len
 
 
