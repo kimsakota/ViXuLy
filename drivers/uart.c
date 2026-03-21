@@ -42,6 +42,12 @@ void uart_write_string(const char* s)
 		uart_write_char(*s++);
 }
 
+void uart_write_hex_byte(uint8_t byte) {
+	const char hex_chars[] = "0123456789ABCDEF";
+	uart_write_char(hex_chars[(byte >> 4) & 0x0F]);
+	uart_write_char(hex_chars[byte & 0x0F]);
+}
+
 bool uart_read_char(char* out)
 {
 	// Check for start bit (RX goes Low)
@@ -67,9 +73,6 @@ bool uart_read_char(char* out)
 
 		_delay_us(104);
 	}
-	
-	// Wait for stop bit
-	_delay_us(104);
 
 	// Trả về dữ liệu đã đọc qua con trỏ out
 	*out = data;

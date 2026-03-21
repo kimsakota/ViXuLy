@@ -141,3 +141,18 @@ Script `tool.ps1`:
 - `drivers/adc0804.c`
 
 Các file này có thể để dành cho mở rộng sau.
+
+
+FRAME (khung) 
+[HEADER][CMD][LEN][DATA...][CHECKSUM]
+Ví dụ:
+X là PC, Y là UART của MCU
+Khi chuyền từ PC đến MCU:
+AA 01 01 FF 55
+MCU nhận ''
+
+Trong thư viện avr/io.h, gồm DDRx, PORTx, PINx
+DDRx là thanh ghi điều khiển hướng của chân (0 input, 1 output)
+PORTx là thanh ghi điều khiển mức điện áp ra chân (0 LOW, 1
+PINx là thanh ghi đọc mức điện áp vào chân (0 LOW, 1 HIGH)
+Chứa các chân nhỏ như PC0, PC1, PD0, PD1, PB0, PB1... tương ứng với các chân vật lý trên vi điều khiển.

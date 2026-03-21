@@ -21,12 +21,9 @@ void app_task() {
     frame_t frame;
 
     if (uart_read_char((char*)&byte)) {
-        uart_write_string("RB\r\n");
-		uart_write_string(byte);
         if (frame_parse_byte(byte, &frame)) {
            uart_write_string("FOK\r\n");
 			// Khi một khung dữ liệu hợp lệ được nhận, xử lý lệnh dựa trên cmd và len
-
 
 			// Xử lý lệnh dựa trên cmd và len, nếu cmd là CMD_SET_ALL và len là 1, gọi hàm device_service_set_all với giá trị data[0]. Nếu cmd là CMD_SET_SINGLE và len là 2, lấy index từ data[0] và value từ data[1], sau đó gọi device_service_turn_on hoặc device_service_turn_off dựa trên giá trị của value. Sau khi xử lý lệnh, gửi phản hồi "ACK\r\n" nếu lệnh hợp lệ hoặc "NACK\r\n" nếu lệnh không hợp lệ.
             if (frame.cmd == CMD_SET_ALL && frame.len == 1) {
@@ -45,6 +42,6 @@ void app_task() {
 				uart_write_string("ACK\r\n");
             }
 			else uart_write_string("NACK\r\n");
-        }
+        } 
     }
 }

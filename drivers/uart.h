@@ -2,6 +2,7 @@
 #define UART_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 /* Xây dựng chuẩn truyền thông nối tiếp thông qua việc bit-banging
 (sử dụng kỹ thuật lập trình GPIO nhấp nhả mức logic có tính toán 
 thời gian thay vì phần cứng UART module tích hợp)*/
@@ -20,6 +21,9 @@ void uart_write_char(char c);
 
 /* Vòng lặp gửi đi văn bản text string chuỗi tuần tự từng kí tự một*/
 void uart_write_string(const char* s);
+
+// Hàm này chuyển đổi một byte thành hai ký tự hex và gửi chúng qua UART. Nó sử dụng một bảng ký tự hex để lấy ký tự tương ứng cho nửa byte cao và nửa byte thấp của byte đầu vào, sau đó gọi uart_write_char để gửi từng ký tự hex qua UART.
+void uart_write_hex_byte(uint8_t byte);
 
 /* Đọc byte đơn. Nó là một hàm đọc không chặn (Non-blocking mode). 
 Nó kiểm tra xem chân RX có rớt xuống Low biểu thị Start bit hay không. 

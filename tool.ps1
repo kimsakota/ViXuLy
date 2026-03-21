@@ -3,8 +3,23 @@
 
 param(
     [string]$Port = "COM2",
-    [int]$Baud = 9600
+    [int]$Baud = 9600,
+    [int]$InterByteDelayMs = 15,
+    [int]$InterFrameDelayMs = 50
 )
+
+function Parse-HexByte {
+    param([string]$Value)
+    $s = $Value.Trim()
+    if ($s.StartsWith("0x", [System.StringComparison]::OrdinalIgnoreCase)) {
+        $s = $s.Substring(2)
+    }
+    $n = [Convert]::ToInt32($s, 16)
+    if ($n -lt 0 -or $n -gt 255) {
+        throw "Hex byte out of range (00..FF): $Value"
+    }
+    return $n
+}
 
 function Calc-Checksum {
     param(
@@ -30,34 +45,30 @@ function Build-Frame {
     return [int[]]$arr
 }
 
-function Parse-HexByte {
-    param(
-        [string]$Text,
-        [string]$Name = 'value'
-    )
-
-    $v = [Convert]::ToInt32($Text, 16)
-    if ($v -lt 0 -or $v -gt 0xFF) {
-        throw "$Name must be 00..FF"
-    }
-    return $v
-}
-
 function Send-Frame {
     param(
         [System.IO.Ports.SerialPort]$Ser,
-        [int[]]$Frame
+        [int[]]$Frame,
+        [int]$ByteDelayMs = 15,
+        [int]$FrameDelayMs = 50
     )
-    $bytes = [byte[]]$Frame
-    $Ser.Write($bytes, 0, $bytes.Length)
+    foreach ($b in $Frame) {
+        $Ser.BaseStream.WriteByte([byte]$b)
+        if ($ByteDelayMs -gt 0) {
+            Start-Sleep -Milliseconds $ByteDelayMs
+        }
+    }
     $Ser.BaseStream.Flush()
+    if ($FrameDelayMs -gt 0) {
+        Start-Sleep -Milliseconds $FrameDelayMs
+    }
     Write-Host ("Sent: " + (($Frame | ForEach-Object { $_.ToString('X2') }) -join ' '))
 }
 
 function Try-Read-Response {
     param(
         [System.IO.Ports.SerialPort]$Ser,
-        [double]$Timeout = 1.00
+        [double]$Timeout = 1.0
     )
     $end = (Get-Date).AddSeconds($Timeout)
     $rx = New-Object System.Collections.Generic.List[byte]
@@ -101,7 +112,11 @@ $CMD_SET_SINGLE = 0x02
 try {
     $ser = $null
     $opened = $false
-    $ser = New-Object System.IO.Ports.SerialPort $Port, $Baud, 'None', 8, 1
+    $ser = New-Object System.IO.Ports.SerialPort $Port, $Baud, 'None', 8, 'One'
+    $ser.ReadTimeout = 200
+    $ser.WriteTimeout = 200
+    $ser.DtrEnable = $true
+    $ser.RtsEnable = $true
     # Kiểm tra danh sách cổng khả dụng
     $availablePorts = [System.IO.Ports.SerialPort]::GetPortNames()
     Write-Host "[INFO] Các cổng serial khả dụng: $($availablePorts -join ', ')"
@@ -111,23 +126,12 @@ try {
     }
     try {
         $ser.Open()
-        $ser.ReadTimeout = 100
-        $ser.WriteTimeout = 100
+        Start-Sleep -Milliseconds 300
         $ser.DiscardInBuffer()
         $ser.DiscardOutBuffer()
         $opened = $true
         Write-Host "[SUCCESS] Đã kết nối thành công tới cổng ${Port} @ ${Baud} baud."
         Print-Help
-
-        # Thử đọc dữ liệu khởi động (ví dụ: "System Ready")
-        $boot = Try-Read-Response -Ser $ser -Timeout 0.8
-        if ($boot.Length -gt 0) {
-            try {
-                $bootText = [System.Text.Encoding]::ASCII.GetString($boot)
-                Write-Host "BOOT text: $($bootText)"
-            } catch {}
-            Write-Host ("BOOT hex : " + (($boot | ForEach-Object { $_.ToString('X2') }) -join ' '))
-        }
     } catch {
         Write-Host "[ERROR] Không thể kết nối tới cổng ${Port}. Chi tiết lỗi: $_"
         if ($ser -and $ser.IsOpen) { $ser.Close() }
@@ -147,7 +151,7 @@ try {
             switch ($cmd) {
                 'all' {
                     if ($parts.Count -ne 2) { Write-Host 'Usage: all <hex>'; continue }
-                    $value = Parse-HexByte -Text $parts[1] -Name 'all value'
+                    $value = Parse-HexByte $parts[1]
                     $frame = Build-Frame -Cmd $CMD_SET_ALL -Data @($value)
                 }
                 'single' {
@@ -160,12 +164,10 @@ try {
                 }
                 'raw' {
                     if ($parts.Count -lt 2) { Write-Host 'Usage: raw <cmd_hex> <data_hex...>'; continue }
-                    $cmdhex = Parse-HexByte -Text $parts[1] -Name 'cmd'
+                    $cmdhex = Parse-HexByte $parts[1]
                     $data = @()
                     if ($parts.Count -gt 2) {
-                        foreach ($x in $parts[2..($parts.Count-1)]) {
-                            $data += (Parse-HexByte -Text $x -Name 'data byte')
-                        }
+                        foreach ($x in $parts[2..($parts.Count-1)]) { $data += Parse-HexByte $x }
                     }
                     $frame = Build-Frame -Cmd $cmdhex -Data $data
                 }
@@ -173,7 +175,7 @@ try {
                     Write-Host "Unknown command. Type 'help'"; continue
                 }
             }
-            Send-Frame -Ser $ser -Frame $frame
+            Send-Frame -Ser $ser -Frame $frame -ByteDelayMs $InterByteDelayMs -FrameDelayMs $InterFrameDelayMs
             $rx = Try-Read-Response -Ser $ser
             if ($rx.Length -gt 0) {
                 try {

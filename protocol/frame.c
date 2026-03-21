@@ -1,4 +1,6 @@
 #include "frame.h"
+#include "../drivers/uart.h"
+#include <stdint.h>
 
 static uint8_t state = 0;
 static uint8_t buffer[16];
@@ -50,9 +52,11 @@ bool frame_parse_byte(uint8_t byte, frame_t* out) {
             break;
         case 3: // Reading data
             buffer[index++] = byte;
-
+            // index = 4
             if (index == (3 + expected_len))
                 state = 4; // All data received, go to checksum
+            else if (index > (3 + expected_len))
+				state = 0; // Too much data, reset
             break;
         case 4: { // Reading checksum
             uint8_t cmd = buffer[1];
