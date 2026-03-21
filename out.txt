@@ -1,0 +1,27 @@
+Using built-in specs.
+Reading specs from c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../lib/gcc/avr/4.9.2/device-specs/specs-avr2
+COLLECT_GCC=C:\Program Files (x86)\Labcenter Electronics\Proteus 8 Professional\Tools\ARDUINO\hardware\tools\avr\bin\avr-gcc.exe
+Target: avr
+Configured with: ../gcc/configure --enable-fixed-point --enable-languages=c,c++ --prefix=/c/jenkins/workspace/avr-gcc/label/winxp-32-mingw/objdir --enable-long-long --disable-nls --disable-checking --disable-libssp --disable-libada --disable-shared --enable-lto --with-avrlibc=yes --with-dwarf2 --disable-doc --target=avr
+Thread model: single
+gcc version 4.9.2 (GCC) 
+COLLECT_GCC_OPTIONS='-E' '-v' '-specs=device-specs/specs-avr2'
+ c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../libexec/gcc/avr/4.9.2/cc1.exe -E -quiet -v -iprefix c:\program files (x86)\labcenter electronics\proteus 8 professional\tools\arduino\hardware\tools\avr\bin\../lib/gcc/avr/4.9.2/ - -mn-flash=6 -mskip-bug
+# 1 "<stdin>"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "<stdin>"
+ignoring nonexistent directory "c:\program files (x86)\labcenter electronics\proteus 8 professional\tools\arduino\hardware\tools\avr\bin\../lib/gcc/avr/4.9.2/../../../../avr/sys-include"
+ignoring duplicate directory "c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/lib/gcc/../../lib/gcc/avr/4.9.2/include"
+ignoring duplicate directory "c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/lib/gcc/../../lib/gcc/avr/4.9.2/include-fixed"
+ignoring nonexistent directory "c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/lib/gcc/../../lib/gcc/avr/4.9.2/../../../../avr/sys-include"
+ignoring duplicate directory "c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/lib/gcc/../../lib/gcc/avr/4.9.2/../../../../avr/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ c:\program files (x86)\labcenter electronics\proteus 8 professional\tools\arduino\hardware\tools\avr\bin\../lib/gcc/avr/4.9.2/include
+ c:\program files (x86)\labcenter electronics\proteus 8 professional\tools\arduino\hardware\tools\avr\bin\../lib/gcc/avr/4.9.2/include-fixed
+ c:\program files (x86)\labcenter electronics\proteus 8 professional\tools\arduino\hardware\tools\avr\bin\../lib/gcc/avr/4.9.2/../../../../avr/include
+End of search list.
+COMPILER_PATH=c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../libexec/gcc/avr/4.9.2/;c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../libexec/gcc/;c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../lib/gcc/avr/4.9.2/../../../../avr/bin/
+LIBRARY_PATH=c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../lib/gcc/avr/4.9.2/;c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../lib/gcc/;c:/program files (x86)/labcenter electronics/proteus 8 professional/tools/arduino/hardware/tools/avr/bin/../lib/gcc/avr/4.9.2/../../../../avr/lib/
+COLLECT_GCC_OPTIONS='-E' '-v' '-specs=device-specs/specs-avr2'

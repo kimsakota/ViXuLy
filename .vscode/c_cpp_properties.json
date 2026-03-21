@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "AVR",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Program Files (x86)/Labcenter Electronics/Proteus 8 Professional/Tools/ARDUINO/hardware/tools/avr/avr/include",
+                "C:/Program Files (x86)/Labcenter Electronics/Proteus 8 Professional/Tools/ARDUINO/hardware/tools/avr/lib/gcc/avr/4.9.2/include"
+            ],
+            "defines": [
+                "__AVR_ATmega16__",
+                "F_CPU=8000000UL"
+            ],
+            "compilerPath": "C:/Program Files (x86)/Labcenter Electronics/Proteus 8 Professional/Tools/ARDUINO/hardware/tools/avr/bin/avr-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-x86",
+            "compilerArgs": [
+                "-mmcu=atmega16"
+            ]
+        }
+    ],
+    "version": 4
+}
