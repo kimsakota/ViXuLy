@@ -5,11 +5,11 @@
 
 void uart_init()
 {
-	// Cấu hình chân TX là output, RX là input
+	// Configure TX pin as output, RX pin as input
 	UART_DDR |= (1 << UART_TX_PIN);
 	UART_DDR &= ~(1 << UART_RX_PIN);
 
-	// Đặt trạng thái TX và RX lên mức High (Idle state)
+	// Set TX and RX to High (Idle state)
 	UART_PORT |= (1 << UART_TX_PIN);
 	UART_PORT |= (1 << UART_RX_PIN);
 }
@@ -74,7 +74,7 @@ bool uart_read_char(char* out)
 		_delay_us(104);
 	}
 
-	// Trả về dữ liệu đã đọc qua con trỏ out
+	// Return the read data via 'out' pointer
 	*out = data;
 	return true;
 }

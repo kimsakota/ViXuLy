@@ -7,7 +7,7 @@
 #define PPI_DATA_DDR DDRD
 #define PPI_DATA_PORT PORTD
 
-// Nối giữa PPI và ATmenga (Control Bus)
+// Connection between PPI and ATmega (Control Bus)
 #define PPI_CTRL_DDR DDRB
 #define PPI_CTRL_PORT PORTB
 
@@ -22,8 +22,8 @@
 #define UART_DDR DDRC
 #define UART_PIN PINC
 
-// Nối giữa UART và ATmega (TX/RX)
-// PC0 là TX (Output), PC1 là RX (Input)
+// Connection between UART and ATmega (TX/RX)
+// PC0 is TX (Output), PC1 is RX (Input)
 // Virtual Terminal TXD -> PC1, RXD -> PC0
 #define UART_TX_PIN PC0
 #define UART_RX_PIN PC1

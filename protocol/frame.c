@@ -24,8 +24,7 @@ uint8_t frame_calculate_checksum(uint8_t cmd, uint8_t len, uint8_t* data) {
 bool frame_parse_byte(uint8_t byte, frame_t* out) {
     switch (state) {
         case 0:
-            // Kiểm tra byte đầu tiên có phải là FRAME_HEADER không, nếu có thì bắt đầu
-            // xây dựng khung dữ liệu
+            // Check if first byte is FRAME_HEADER, and if so start building data frame
             if (byte == FRAME_HEADER) {
                 index = 0;
                 buffer[index++] = byte;
@@ -33,13 +32,11 @@ bool frame_parse_byte(uint8_t byte, frame_t* out) {
             }
             break;
         case 1:
-            // Reading cmd, lưu byte vào buffer và chuyển sang trạng thái tiếp theo để
-            // đọc len
+            // Reading cmd, cache byte into buffer and switch state to len
             buffer[index++] = byte;
             state = 2;
             break;
-        case 2: // Reading len, lưu byte vào buffer và xác định độ dài dữ liệu mong
-            // đợi
+        case 2: // Reading len, set expected data length
             buffer[index++] = byte;
             expected_len = byte;
 

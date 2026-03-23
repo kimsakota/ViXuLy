@@ -3,33 +3,24 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-/* Xây dựng chuẩn truyền thông nối tiếp thông qua việc bit-banging
-(sử dụng kỹ thuật lập trình GPIO nhấp nhả mức logic có tính toán 
-thời gian thay vì phần cứng UART module tích hợp)*/
+/* Build serial communication standard via bit-banging
+(time-calculated GPIO toggling instead of hardware UART module) */
 
-/* Hàm này cấu hình TX là ngõ ra, RX là ngõ vào. Đặt trạng thái TX 
-lên múc Hight (default) làm tín hiệu chờ trạng thái rỗi tĩnh của 
-chuẩn USART */
+/* Configure TX as output, RX as input. Set TX high (Idle state) */
 void uart_init();
 
-/* Hàm đẩy 1 byte dữ liệu c. Đầu tiên báo hiệu bằng 1 Start bit
-(Mức dòng kéo xuống Low), sử dụng bitwise logic trượt giá trị lặp qua 8 bit dữ liệu tuần 
-tự gửi, và kết thúc chốt bằng 1 Stop bit (High). Khoảng thời gian
-delay tính toán chuẩn cho thiết lập giữa các bit là 104. Thời gian
-này tuân theo công thức 1s / 9600 baud = 104.15 µs/bit truyền */
+/* Send 1 byte of data sequentially via GPIO bit-banging. 
+Applies delay based on 9600 baud rate (104.15us/bit). */
 void uart_write_char(char c);
 
-/* Vòng lặp gửi đi văn bản text string chuỗi tuần tự từng kí tự một*/
+/* Send a string sequence */
 void uart_write_string(const char* s);
 
-// Hàm này chuyển đổi một byte thành hai ký tự hex và gửi chúng qua UART. Nó sử dụng một bảng ký tự hex để lấy ký tự tương ứng cho nửa byte cao và nửa byte thấp của byte đầu vào, sau đó gọi uart_write_char để gửi từng ký tự hex qua UART.
+// Convert a byte into two hex chars and send via UART
 void uart_write_hex_byte(uint8_t byte);
 
-/* Đọc byte đơn. Nó là một hàm đọc không chặn (Non-blocking mode). 
-Nó kiểm tra xem chân RX có rớt xuống Low biểu thị Start bit hay không. 
-Nếu có, delay chờ '52us' để lấy mẫu ở giữa của bit để tránh gia nhiễu
-điện (noise glitch), sau đó dịch mẫu tuần tự tiếp tục delay đợi
-đọc 8 bit và cuối cùng gắn dữ liệu về biến con trở */
-bool uart_read_char(char* c);
+/* Read a single byte in non-blocking mode.
+Checks for RX Low (Start bit), reads 8 bits sequentially and delays appropriately. */
+bool uart_read_char(char* out);
 
 #endif /* UART_H_ */
