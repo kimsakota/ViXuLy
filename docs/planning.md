@@ -1,6 +1,7 @@
 ﻿# Phân tích dự án điều khiển hệ vi xử lý 8-bit và 8255 qua UART
 
-Tài liệu này mô tả chi tiết kiến trúc, mục tiêu và lộ trình phát triển của dự án firmware vi xử lý 8-bit dùng ATmega16.
+Tài liệu này mô tả chi tiết kiến trúc, mục tiêu và lộ trình phát 
+triển của dự án firmware vi xử lý 8-bit dùng ATmega16.
 
 ## 1. Mục tiêu hệ thống phần mềm
 
@@ -13,8 +14,11 @@ Thiết kế firmware cho hệ vi xử lý 8-bit dùng ATmega16 làm CPU, có:
 - Kiến trúc module rõ ràng, dễ mở rộng
 
 Hệ thống cần hỗ trợ 2 mức:
-- **Mức 1:** chạy demo cơ bản (điều khiển LED qua 8255, gửi/nhận UART, test command).
-- **Mức 2:** đúng bản chất vi xử lý (có memory map, có RAM/ROM mô phỏng, có giải mã địa chỉ bằng phần mềm, có truy cập bus CPU kiểu read/write).
+- **Mức 1:** chạy demo cơ bản (điều khiển LED qua 8255, gửi/nhận 
+  UART, test command).
+- **Mức 2:** đúng bản chất vi xử lý (có memory map, có RAM/ROM mô 
+  phỏng, có giải mã địa chỉ bằng phần mềm, có truy cập bus CPU kiểu 
+  read/write).
 
 ## 2. Triết lý kiến trúc
 
