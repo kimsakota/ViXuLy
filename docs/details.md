@@ -4,7 +4,7 @@
 
 ---
 
-## MỤC LỤC
+## MỤC LỤC 
 
 1. [Tổng quan kiến trúc hệ thống](#1-tổng-quan-kiến-trúc-hệ-thống)
 2. [Sơ đồ phân tầng phần mềm](#2-sơ-đồ-phân-tầng-phần-mềm)
