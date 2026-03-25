@@ -269,11 +269,11 @@ void    memory_write(uint16_t addr, uint8_t data);
 #### Cấu trúc dữ liệu nội bộ
 
 ```c
-static const uint8_t rom[ROM_SIZE] = {0};  // ROM: 16KB, chỉ đọc, khởi tạo = 0
-static uint8_t       ram[RAM_SIZE];        // RAM: 16KB, đọc ghi tự do
+static const uint8_t rom[ROM_SIZE] PROGMEM = {0};  // ROM: 256 bytes, chỉ đọc, lưu trên Flash
+static uint8_t       ram[RAM_SIZE];                // RAM: 256 bytes, đọc ghi tự do
 ```
 
-Hai mảng này được đặt trong SRAM của AVR. `rom` được khai báo `const` nên compiler sẽ đặt nó trong vùng flash (.rodata).
+`rom` được khai báo `const` + **`PROGMEM`** → compiler đặt mảng lên **Flash (Program Memory)**, không chiếm SRAM. `ram` là mảng bình thường nằm trong SRAM. Attribute `PROGMEM` là macro của AVR-LibC, yêu cầu include `<avr/pgmspace.h>`.
 
 #### `memory_init()`
 
@@ -291,17 +291,20 @@ Xóa toàn bộ RAM về `0`. Thực hiện một lần khi hệ thống khởi 
 ```c
 uint8_t memory_read(uint16_t addr) {
     if (addr >= MEM_ROM_START && addr <= MEM_ROM_END)
-        return rom[addr - MEM_ROM_START];       // Đọc từ ROM
+        return pgm_read_byte(&rom[addr - MEM_ROM_START]);  // Đọc từ Flash (PROGMEM)
 
     else if (addr >= MEM_RAM_START && addr <= MEM_RAM_END)
-        return ram[addr - MEM_RAM_START];       // Đọc từ RAM
+        return ram[addr - MEM_RAM_START];                  // Đọc từ RAM
 
     else if (addr >= MEM_8255_START && addr <= MEM_8255_END)
-        return io_map_read(addr);               // Đọc từ thiết bị IO
+        return io_map_read(addr);                          // Đọc từ thiết bị IO
 
     return 0xFF;   // Địa chỉ không hợp lệ → bus floating
 }
 ```
+
+**Tại sao phải dùng `pgm_read_byte` thay vì đọc trực tiếp?**
+AVR là kiến trúc **Harvard** — Flash và SRAM có bus địa chỉ **hoàn toàn riêng biệt**. Vì `rom` được đặt trên Flash bởi `PROGMEM`, nếu dùng `rom[i]` thông thường → CPU đọc nhầm vùng SRAM (địa chỉ tương đương), trả về giá trị rác. Hàm `pgm_read_byte(&rom[i])` phát sinh lệnh máy **`LPM`** (Load Program Memory) để đọc đúng từ Flash.
 
 **Cơ chế offset:** Vì mảng luôn bắt đầu từ index 0, phải trừ địa chỉ bắt đầu của vùng:
 - `addr = 0x4100` → `ram[0x4100 - 0x4000]` = `ram[0x0100]` = `ram[256]` ✓
@@ -322,7 +325,7 @@ void memory_write(uint16_t addr, uint8_t data) {
 }
 ```
 
-ROM không có nhánh ghi → mọi cố gắng ghi vào ROM (0x0000–0x3FFF) đều bị **silently ignore**, đúng với hành vi ROM thực tế.
+ROM không có nhánh ghi → mọi cố gắng ghi vào ROM (`0x0000–0x00FF`) đều bị **silently ignore**, đúng với hành vi ROM thực tế. Tương tự, mọi địa chỉ không thuộc 3 vùng trên cũng bị bỏ qua hoàn toàn.
 
 ---
 
