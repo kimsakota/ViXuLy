@@ -1,6 +1,9 @@
 # Cơ chế hoạt động & Sơ đồ kiến trúc
 
-Tài liệu này trình bày chi tiết luồng dữ liệu, chức năng của các khối trong phần mềm và cách dữ liệu được truyền từ thiết bị ngoại vi (PC/ESP32) xuống tận chân phần cứng (LED, vi điều khiển).
+Tài liệu này trình bày chi tiết luồng dữ liệu, chức năng của 
+các khối trong phần mềm và cách dữ liệu được truyền từ thiết 
+bị ngoại vi (PC/ESP32) xuống tận chân phần cứng (LED, vi điều
+khiển).
 
 ## 1. Sơ đồ khối kiến trúc phần mềm
 

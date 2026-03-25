@@ -6,6 +6,7 @@
 // 8255 data bus
 #define PPI_DATA_DDR DDRD
 #define PPI_DATA_PORT PORTD
+#define PPI_DATA_PIN PIND
 
 // Connection between PPI and ATmega (Control Bus)
 #define PPI_CTRL_DDR DDRB

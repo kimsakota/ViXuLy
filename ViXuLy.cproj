@@ -141,6 +141,24 @@
     <Compile Include="config\system_config.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="core\cpu_bus.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="core\cpu_bus.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="core\io_map.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="core\io_map.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="core\memory.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="core\memory.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="drivers\adc0804.c">
       <SubType>compile</SubType>
     </Compile>
@@ -184,6 +202,7 @@
   <ItemGroup>
     <Folder Include="config" />
     <Folder Include="app" />
+    <Folder Include="core" />
     <Folder Include="bsp" />
     <Folder Include="drivers" />
     <Folder Include="services" />
