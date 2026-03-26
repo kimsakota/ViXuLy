@@ -29,4 +29,8 @@ bool frame_parse_byte(uint8_t byte, frame_t* out);
 // Value will verify if data was not corrupted during transmission.
 uint8_t frame_calculate_checksum(uint8_t cmd, uint8_t len, uint8_t* data);
 
+// Builds and transmits a complete frame over UART.
+// Format: [HEADER][cmd][len][data[0]..data[len-1]][checksum]
+void frame_send(uint8_t cmd, uint8_t len, uint8_t* data);
+
 #endif /* FRAME_H_ */

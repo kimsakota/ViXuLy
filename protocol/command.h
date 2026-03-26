@@ -4,6 +4,7 @@
 
 #define CMD_SET_ALL     0x01
 #define CMD_SET_SINGLE  0x02
+#define CMD_READ_CURRENT 0x03
 
 // Acknowledge command signaling "Received and successfully executed" 
 #define CMD_ACK 		0x81

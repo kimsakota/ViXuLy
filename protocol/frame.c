@@ -2,10 +2,10 @@
 #include "../drivers/uart.h"
 #include <stdint.h>
 
-static uint8_t state = 0;
-static uint8_t buffer[16];
-static uint8_t index = 0;
-static uint8_t expected_len = 0;
+static uint8_t state = 0; // Lưu trạng thái hiện tại của quá trình phân tích khung dữ liệu
+static uint8_t buffer[16]; // Bộ đệm tạm thời để lưu trữ các byte của khung dữ liệu đang được phân tích
+static uint8_t index = 0; // Chỉ số hiện tại trong bộ đệm, dùng để theo dõi số byte đã nhận được cho khung dữ liệu hiện tại
+static uint8_t expected_len = 0; // Độ dài dữ liệu mong đợi, được xác định khi nhận được byte độ dài (len) trong khung dữ liệu
 
 void frame_init() {
     state = 0;
@@ -78,4 +78,15 @@ bool frame_parse_byte(uint8_t byte, frame_t* out) {
         }
     }
     return false; // Frame not complete yet
+}
+
+void frame_send(uint8_t cmd, uint8_t len, uint8_t* data)
+{
+    uint8_t cs = frame_calculate_checksum(cmd, len, data);
+    uart_write_char(FRAME_HEADER);
+    uart_write_char(cmd);
+    uart_write_char(len);
+    for (uint8_t i = 0; i < len; i++)
+        uart_write_char(data[i]);
+    uart_write_char(cs);
 }

@@ -17,7 +17,7 @@ static void set_addr(uint8_t addr) {
 
 void ppi8255_write(ppi_reg_t reg, uint8_t data) {
     PPI_DATA_DDR = 0xFF; // Set data bus to output
-    PPI_DATA_PORT = data;
+	PPI_DATA_PORT = data; // Put data on bus
 
     set_addr(reg);
 
@@ -25,7 +25,10 @@ void ppi8255_write(ppi_reg_t reg, uint8_t data) {
     PPI_CTRL_PORT &= ~(1 << PPI_CS_PIN);
 
     PPI_CTRL_PORT &= ~(1 << PPI_WR_PIN);
+
+	// Chờ 1 micro giây, đây là yêu cầu timing từ datasheet của 8255 để đảm bảo dữ liệu được ghi đúng cách. Tùy thuộc vào tốc độ CPU và yêu cầu cụ thể, bạn có thể cần điều chỉnh thời gian này.
     _delay_us(1); 
+
     PPI_CTRL_PORT |= (1 << PPI_WR_PIN);
 
     PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
@@ -44,6 +47,7 @@ uint8_t ppi8255_read(ppi_reg_t reg) {
     PPI_CTRL_PORT &= ~(1 << PPI_RD_PIN);
     _delay_us(1); 
     data = PPI_DATA_PIN;
+
     PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
 
     PPI_CTRL_PORT |= (1 << PPI_CS_PIN);

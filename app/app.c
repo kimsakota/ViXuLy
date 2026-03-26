@@ -3,6 +3,7 @@
 #include "../drivers/ppi8255.h"
 #include "../drivers/uart.h"
 #include "../services/device_service.h"
+#include "../services/measurement_service.h"
 #include "../protocol/frame.h"
 #include "../protocol/command.h"
 #include "../core/memory.h"
@@ -13,6 +14,7 @@ void app_init() {
     ppi8255_init();
     memory_init();
     device_service_init();
+    measurement_service_init();
     frame_init();
 
     uart_write_string("System Ready\r\n");
@@ -45,6 +47,12 @@ void app_task() {
 
 				uart_write_string("ACK\r\n");
             }
+			else if (frame.cmd == CMD_READ_CURRENT && frame.len == 1) {
+				uint8_t index = frame.data[0];
+				uint8_t value = measurement_service_read(index);
+				uint8_t resp[2] = { index, value };
+				frame_send(CMD_READ_CURRENT, 2, resp);
+			}
 			else uart_write_string("NACK\r\n");
         } 
     }
