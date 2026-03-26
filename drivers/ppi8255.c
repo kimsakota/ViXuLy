@@ -67,7 +67,11 @@ void ppi8255_init(void) {
     PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
     PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
 
-    ppi8255_write(PPI_CONTROL, 0x80); // mode 0, all output
+    // mode 0:
+    // Port A = output (điều khiển thiết bị)
+    // Port B = input  (nhận D0..D7 từ ADC0804)
+    // Port C = output (CS/WR/RD + chọn kênh 74HC4051)
+    ppi8255_write(PPI_CONTROL, 0x82);
 }
 
 void ppi8255_write_portA(uint8_t value) { ppi8255_write(PPI_PORT_A, value); }

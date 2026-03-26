@@ -1,55 +1,47 @@
 ﻿#include "adc0804.h"
 #include "../bsp/board.h"
+#include "ppi8255.h"
 #include <util/delay.h>
+
+static uint8_t portc_shadow;
+
+static void set_portc_bit(uint8_t bit, uint8_t high)
+{
+    if (high)
+        portc_shadow |= (1 << bit);
+    else
+        portc_shadow &= ~(1 << bit);
+    ppi8255_write_portC(portc_shadow);
+}
 
 void adc0804_init(void)
 {
-    // CS, WR, RD, CH_A/B/C as outputs; INTR as input
-    ADC_DDR |=  (1 << ADC_CS_PIN) | (1 << ADC_WR_PIN) | (1 << ADC_RD_PIN)
-              | (1 << ADC_CH_A_PIN) | (1 << ADC_CH_B_PIN) | (1 << ADC_CH_C_PIN);
-    ADC_DDR &= ~(1 << ADC_INTR_PIN);
-
-    // Default inactive state: CS=HIGH, WR=HIGH, RD=HIGH
-    ADC_PORT |=  (1 << ADC_CS_PIN) | (1 << ADC_WR_PIN) | (1 << ADC_RD_PIN);
-    // Channel select default: channel 0
-    ADC_PORT &= ~((1 << ADC_CH_A_PIN) | (1 << ADC_CH_B_PIN) | (1 << ADC_CH_C_PIN));
+    portc_shadow = (1 << PPI_ADC_CS_BIT) | (1 << PPI_ADC_WR_BIT) | (1 << PPI_ADC_RD_BIT);
+    ppi8255_write_portC(portc_shadow);
 }
 
 uint8_t adc0804_read(uint8_t channel)
 {
-    // Select one of 8 analog channels via 74HC4051 (A=bit0, B=bit1, C=bit2)
-    if (channel & 0x01) ADC_PORT |=  (1 << ADC_CH_A_PIN);
-    else                ADC_PORT &= ~(1 << ADC_CH_A_PIN);
+    // Select channel on 74HC4051 by Port C bits (A=bit0, B=bit1, C=bit2)
+    set_portc_bit(PPI_ADC_MUX_A_BIT, (channel & 0x01) != 0);
+    set_portc_bit(PPI_ADC_MUX_B_BIT, (channel & 0x02) != 0);
+    set_portc_bit(PPI_ADC_MUX_C_BIT, (channel & 0x04) != 0);
 
-    if (channel & 0x02) ADC_PORT |=  (1 << ADC_CH_B_PIN);
-    else                ADC_PORT &= ~(1 << ADC_CH_B_PIN);
-
-    if (channel & 0x04) ADC_PORT |=  (1 << ADC_CH_C_PIN);
-    else                ADC_PORT &= ~(1 << ADC_CH_C_PIN);
-
-    // Start conversion: CS low, WR low then high (rising edge triggers ADC0804)
-    ADC_PORT &= ~(1 << ADC_CS_PIN);
-    ADC_PORT &= ~(1 << ADC_WR_PIN);
+    // Start conversion: CS low, WR low then high
+    set_portc_bit(PPI_ADC_CS_BIT, 0);
+    set_portc_bit(PPI_ADC_WR_BIT, 0);
     _delay_us(1);
-    ADC_PORT |=  (1 << ADC_WR_PIN);
+    set_portc_bit(PPI_ADC_WR_BIT, 1);
 
-    // Wait for INTR to go LOW (conversion complete, typ ~110 us)
-    uint8_t timeout = 200;
-    while ((ADC_PIN & (1 << ADC_INTR_PIN)) && timeout--)
-        _delay_us(1);
+    // Conversion time for ADC0804 (polling via fixed delay)
+    _delay_us(120);
 
-    // Read result: switch shared data bus to input, assert RD low
-    PPI_DATA_DDR  = 0x00;
-    PPI_DATA_PORT = 0x00;
-
-    ADC_PORT &= ~(1 << ADC_RD_PIN);
+    // Read converted data via Port B of 8255
+    set_portc_bit(PPI_ADC_RD_BIT, 0);
     _delay_us(1);
-    uint8_t data = PPI_DATA_PIN;
-    ADC_PORT |=  (1 << ADC_RD_PIN);
-    ADC_PORT |=  (1 << ADC_CS_PIN);
-
-    // Restore data bus to output for PPI 8255
-    PPI_DATA_DDR = 0xFF;
+    uint8_t data = ppi8255_read_portB();
+    set_portc_bit(PPI_ADC_RD_BIT, 1);
+    set_portc_bit(PPI_ADC_CS_BIT, 1);
 
     return data;
 }
