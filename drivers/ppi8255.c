@@ -16,62 +16,68 @@ static void set_addr(uint8_t addr) {
 }
 
 void ppi8255_write(ppi_reg_t reg, uint8_t data) {
-    PPI_DATA_DDR = 0xFF; // Set data bus to output
+	PPI_DATA_DDR = 0xFF; // Set data bus to output
 	PPI_DATA_PORT = data; // Put data on bus
 
-    set_addr(reg);
+	set_addr(reg);
+	_delay_us(1); // Chờ address ổn định trên Proteus
 
-    PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
-    PPI_CTRL_PORT &= ~(1 << PPI_CS_PIN);
+	PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
+	PPI_CTRL_PORT &= ~(1 << PPI_CS_PIN);
+	_delay_us(1); // Chờ CS ổn định
 
-    PPI_CTRL_PORT &= ~(1 << PPI_WR_PIN);
+	PPI_CTRL_PORT &= ~(1 << PPI_WR_PIN);
 
 	// Chờ 1 micro giây, đây là yêu cầu timing từ datasheet của 8255 để đảm bảo dữ liệu được ghi đúng cách. Tùy thuộc vào tốc độ CPU và yêu cầu cụ thể, bạn có thể cần điều chỉnh thời gian này.
-    _delay_us(1); 
+	_delay_us(2); 
 
-    PPI_CTRL_PORT |= (1 << PPI_WR_PIN);
+	PPI_CTRL_PORT |= (1 << PPI_WR_PIN);
+	_delay_us(1); // Chờ WR được nhận diện
 
-    PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
+	PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
 }
 
 uint8_t ppi8255_read(ppi_reg_t reg) {
-    uint8_t data;
-    PPI_DATA_DDR = 0x00; // Set data bus to input
-    PPI_DATA_PORT = 0x00; // Disable pull-ups
+	uint8_t data;
+	PPI_DATA_DDR = 0x00; // Set data bus to input
+	PPI_DATA_PORT = 0x00; // Disable pull-ups
 
-    set_addr(reg);
+	set_addr(reg);
+	_delay_us(1); // Chờ address ổn định
 
-    PPI_CTRL_PORT |= (1 << PPI_WR_PIN);
-    PPI_CTRL_PORT &= ~(1 << PPI_CS_PIN);
+	PPI_CTRL_PORT |= (1 << PPI_WR_PIN);
+	PPI_CTRL_PORT &= ~(1 << PPI_CS_PIN);
+	_delay_us(1); // Chờ CS ổn định
 
-    PPI_CTRL_PORT &= ~(1 << PPI_RD_PIN);
-    _delay_us(1); 
-    data = PPI_DATA_PIN;
+	PPI_CTRL_PORT &= ~(1 << PPI_RD_PIN);
+    _delay_us(20); // Kéo dài xung RD# để dễ quan sát trên Proteus và ổn định dữ liệu
+	data = PPI_DATA_PIN;
 
-    PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
+	PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
+   _delay_us(2);
 
-    PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
-    return data;
+	PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
+	return data;
 }
 
 void ppi8255_init(void) {
-    // set control pins output
-    PPI_CTRL_DDR |= (1 << PPI_WR_PIN) | (1 << PPI_RD_PIN) | (1 << PPI_A0_PIN) |
-                    (1 << PPI_A1_PIN) | (1 << PPI_CS_PIN);
+	// default state (nên set HIGH trước khi set DDR để tránh chân bus bị kéo xuống LOW ngẫu nhiên)
+	PPI_CTRL_PORT |= (1 << PPI_WR_PIN) | (1 << PPI_RD_PIN) | (1 << PPI_CS_PIN);
 
-    // set data bus output
-    PPI_DATA_DDR = 0xFF;
+	// set control pins output
+	PPI_CTRL_DDR |= (1 << PPI_WR_PIN) | (1 << PPI_RD_PIN) | (1 << PPI_A0_PIN) |
+					(1 << PPI_A1_PIN) | (1 << PPI_CS_PIN);
 
-    // default state
-    PPI_CTRL_PORT |= (1 << PPI_WR_PIN);
-    PPI_CTRL_PORT |= (1 << PPI_RD_PIN);
-    PPI_CTRL_PORT |= (1 << PPI_CS_PIN);
+	// set data bus output
+	PPI_DATA_DDR = 0xFF;
 
-    // mode 0:
-    // Port A = output (điều khiển thiết bị)
-    // Port B = input  (nhận D0..D7 từ ADC0804)
-    // Port C = output (CS/WR/RD + chọn kênh 74HC4051)
-    ppi8255_write(PPI_CONTROL, 0x82);
+	_delay_ms(1); // Chờ 8255 khởi động ổn định trước khi ghi Control Word
+
+	// mode 0:
+	// Port A = output (điều khiển thiết bị)
+	// Port B = input  (nhận D0..D7 từ ADC0804)
+	// Port C = output (CS/WR/RD + chọn kênh 74HC4051)
+	ppi8255_write(PPI_CONTROL, 0x82);
 }
 
 void ppi8255_write_portA(uint8_t value) { ppi8255_write(PPI_PORT_A, value); }

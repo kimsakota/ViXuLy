@@ -41,8 +41,8 @@
       ▼
 [Intel 8255 PPI]
       │  Port A (PA0–PA7) ──► 8 thiết bị (đèn/relay)
-      │  Port B (PB0–PB7) ──► (dự phòng)
-      │  Port C (PC0–PC7) ──► (dự phòng)
+      │  Port B (PB0–PB7) ◄── D0..D7 từ ADC0804 (dữ liệu đo dòng)
+      │  Port C (PC0–PC7) ──► CS#/WR#/RD# của ADC0804 + A/B/C của 74HC4051
       │  Control Register  ──► cấu hình chiều I/O
 ```
 
@@ -138,9 +138,46 @@ app_task() xử lý lệnh:
   uart_write_string("ACK\r\n") hoặc "NACK\r\n"
 ```
 
+### Luồng đo dòng điện (Push Mode — ~500ms/lần)
+
+```
+AVR tự động mỗi ~500ms (36 vòng lặp × 14ms)
+  │
+  ├── PHASE 1: Đọc 8 kênh
+  │     measurement_service_read(0..7)
+  │       → adc0804_read(i)
+  │          → Port C chọn kênh 74HC4051 + start/read ADC0804
+  │          → Port B lấy D0..D7
+  │     payload[0..7] = dòng điện các kênh
+  │
+  ├── PHASE 2: Lấy trạng thái lệnh
+  │     payload[8] = device_service_get_state()  ← shadow register
+  │
+  └── PHASE 3: Đóng gói và gửi
+        frame_send(CMD_SENSOR_DATA, 9, payload)
+        → Frame: [AA][04][09][I0..I7][state][CS] = 13 bytes
+        → UART TX bit-banging ~13.5ms
+```
+
+**Payload ý nghĩa:**
+
+```
+payload[0..7]  ADC 8-bit kênh 0..7 (dòng điện từng thiết bị)
+payload[8]     device_state bitmask (bit N=1 → đã lệnh BẬT thiết bị N)
+```
+
+**Logic phát hiện lỗi phía nhận (ESP32/Server):**
+
+| `device_state` bit N | `payload[N]` | Trạng thái |
+|---|---|---|
+| 1 (lệnh BẬT) | > THRESHOLD | Bình thường — có dòng |
+| 1 (lệnh BẬT) | = 0 | **LỖI** — không có dòng |
+| 0 (lệnh TẮT) | = 0 | Bình thường — không dòng |
+| 0 (lệnh TẮT) | > THRESHOLD | **CẢNH BÁO** — có dòng rò |
+
 ---
 
-## 4. config/ — Cấu hình hệ thống
+## 4. config/
 
 **File:** `config/system_config.h`
 
@@ -216,7 +253,35 @@ PORTD (PD0–PD7) đóng vai trò **data bus 8-bit** giữa AVR và 8255:
 | RD# | LOW | Cho phép 8255 xuất dữ liệu |
 | A0, A1 | — | Chọn thanh ghi nội bộ 8255 |
 
-### 5.3 UART Pins
+### 5.3 Ánh xạ ADC0804 + 74HC4051 qua 8255
+
+Không có macro GPIO trực tiếp nào trên ATmega dành cho ADC. Thay vào đó, `board.h` định nghĩa **số thứ tự bit** trên `Port C` của 8255:
+
+```c
+// ===== ADC0804 + 74HC4051 via PPI 8255 =====
+// Port A 8255: điều khiển tải (device)
+// Port B 8255: nhận dữ liệu ADC D0..D7
+// Port C 8255: xuất tín hiệu điều khiển ADC/mux
+#define PPI_ADC_CS_BIT    0  // PC0 -> ADC0804 CS#
+#define PPI_ADC_WR_BIT    1  // PC1 -> ADC0804 WR#
+#define PPI_ADC_RD_BIT    2  // PC2 -> ADC0804 RD#
+#define PPI_ADC_MUX_A_BIT 4  // PC4 -> 74HC4051 A
+#define PPI_ADC_MUX_B_BIT 5  // PC5 -> 74HC4051 B
+#define PPI_ADC_MUX_C_BIT 6  // PC6 -> 74HC4051 C
+```
+
+| Bit Port C | Tín hiệu | Mô tả |
+|---|---|---|
+| PC0 | `CS#` ADC0804 | Kích hoạt chip (active LOW) |
+| PC1 | `WR#` ADC0804 | Start conversion (cạnh lên) |
+| PC2 | `RD#` ADC0804 | Cho phép xuất dữ liệu |
+| PC3 | không dùng | dự phòng |
+| PC4 | `A` 74HC4051 | Bit chọn kênh bit 0 |
+| PC5 | `B` 74HC4051 | Bit chọn kênh bit 1 |
+| PC6 | `C` 74HC4051 | Bit chọn kênh bit 2 |
+| PC7 | không dùng | dự phòng |
+
+### 5.4 UART Pins
 
 ```c
 #define UART_PORT   PORTC   // Cổng UART
@@ -391,19 +456,23 @@ Intel 8255 là chip **Programmable Peripheral Interface** có 3 cổng I/O 8-bit
 
 #### Control Word (Byte điều khiển)
 
-Byte `0x80` được ghi vào Control Register khi init:
+Byte `0x82` được ghi vào Control Register khi init:
 
 ```
 Bit 7 = 1        → Mode Set Flag (bắt buộc = 1 khi cấu hình)
 Bit 6–5 = 00     → Mode 0 cho Group A (Port A + Port C upper)
-Bit 4 = 0        → Port A = Output
-Bit 3 = 0        → Port C (upper) = Output
+Bit 4 = 0        → Port A = Output (điều khiển thiết bị)
+Bit 3 = 0        → Port C (upper) = Output (điều khiển ADC/mux)
 Bit 2 = 0        → Mode 0 cho Group B (Port B + Port C lower)
-Bit 1 = 0        → Port B = Output
-Bit 0 = 0        → Port C (lower) = Output
+Bit 1 = 1        → Port B = Input (nhận dữ liệu ADC)
+Bit 0 = 0        → Port C (lower) = Output (điều khiển ADC CS/WR/RD)
 
-→ 0x80 = 1000 0000b: Tất cả Port A, B, C đều là Output, Mode 0
+→ 0x82 = 1000 0010b
+  Port A = Output | Port B = Input | Port C = Output
 ```
+
+**Tại sao đổi từ `0x80` sang `0x82`?**
+Phiên bản trước dùng `0x80` (tất cả output). Khi bổ sung khối đo dòng, Port B phải chuyển thành **input** để nhận dữ liệu số từ ADC0804. Chỉ cần đổi bit D1 từ 0 → 1 → `0x82`.
 
 #### `ppi8255_init()`
 
@@ -421,8 +490,8 @@ void ppi8255_init(void) {
     PPI_CTRL_PORT |= (1<<PPI_RD_PIN);
     PPI_CTRL_PORT |= (1<<PPI_CS_PIN);
 
-    // 4. Ghi Control Word 0x80: Mode 0, tất cả Output
-    ppi8255_write(PPI_CONTROL, 0x80);
+    // 4. Ghi Control Word 0x82: Mode 0, Port A/C = Output, Port B = Input
+    ppi8255_write(PPI_CONTROL, 0x82);
 }
 ```
 
@@ -643,17 +712,79 @@ Ví dụ: `byte = 0xB7` → gửi `'B'` rồi `'7'` → terminal hiện `B7`.
 
 ---
 
-## 8. protocol/ — Giao thức truyền thông
+### 7.3 `adc0804.h` / `adc0804.c` — Driver đọc dòng qua 8255
+
+#### Nguyên lý tổng quát
+
+Driver `adc0804` không điều khiển GPIO ATmega trực tiếp. Toàn bộ tương tác với phần cứng đi qua `8255`:
+- Điều khiển ADC0804 và 74HC4051 bằng cách **ghi `Port C`** của 8255.
+- Đọc kết quả ADC bằng cách **đọc `Port B`** của 8255.
+
+#### `adc0804_init()`
+
+```c
+void adc0804_init(void)
+{
+    // Đặt CS, WR, RD ở mức HIGH (inactive) qua Port C của 8255
+    portc_shadow = (1 << PPI_ADC_CS_BIT) | (1 << PPI_ADC_WR_BIT) | (1 << PPI_ADC_RD_BIT);
+    ppi8255_write_portC(portc_shadow);
+}
+```
+
+`portc_shadow` là biến nội bộ `static` lưu trạng thái hiện tại của Port C. Mỗi lần chỉ muốn đổi 1 bit mà không làm mất các bit khác, driver cập nhật shadow rồi ghi toàn bộ xuống 8255.
+
+#### `adc0804_read(uint8_t channel)`
+
+```c
+uint8_t adc0804_read(uint8_t channel)
+{
+    // Bước 1: Chọn kênh trên 74HC4051 qua Port C
+    set_portc_bit(PPI_ADC_MUX_A_BIT, (channel & 0x01) != 0);
+    set_portc_bit(PPI_ADC_MUX_B_BIT, (channel & 0x02) != 0);
+    set_portc_bit(PPI_ADC_MUX_C_BIT, (channel & 0x04) != 0);
+
+    // Bước 2: Start conversion — CS low, WR low→high
+    set_portc_bit(PPI_ADC_CS_BIT, 0);
+    set_portc_bit(PPI_ADC_WR_BIT, 0);
+    _delay_us(1);
+    set_portc_bit(PPI_ADC_WR_BIT, 1);   // ← cạnh lên WR# kích hoạt ADC
+
+    // Bước 3: Chờ chuyển đổi (~120µs)
+    _delay_us(120);
+
+    // Bước 4: Đọc kết quả qua Port B của 8255
+    set_portc_bit(PPI_ADC_RD_BIT, 0);
+    _delay_us(1);
+    uint8_t data = ppi8255_read_portB();
+    set_portc_bit(PPI_ADC_RD_BIT, 1);
+    set_portc_bit(PPI_ADC_CS_BIT, 1);
+
+    return data;
+}
+```
+
+So sánh với thiết kế cũ:
+
+| Điểm | Phiên bản cũ | Phiên bản hiện tại |
+|---|---|---|
+| Điều khiển ADC | PORTA ATmega trực tiếp | Qua 8255 Port C |
+| Đọc dữ liệu | Đọc `PIND` trực tiếp | Đọc `ppi8255_read_portB()` |
+| Xử lý bus | Phải tri-state PORTD thủ công | 8255 tự quản lý |
+
+---
 
 ### 8.1 `command.h` — Định nghĩa lệnh
 
 ```c
-#define CMD_SET_ALL     0x01   // Đặt trạng thái toàn bộ 8 thiết bị cùng lúc
-#define CMD_SET_SINGLE  0x02   // Điều khiển 1 thiết bị đơn lẻ
+#define CMD_SET_ALL      0x01   // Đặt trạng thái toàn bộ 8 thiết bị cùng lúc (data[0] = bitmask)
+#define CMD_SET_SINGLE   0x02   // Điều khiển 1 thiết bị (data[0]=index, data[1]=0/1)
+#define CMD_SENSOR_DATA  0x04   // AVR push: 8 byte dòng điện + 1 byte device_state = 9 byte
 
-#define CMD_ACK         0x81   // Phản hồi thành công
-#define CMD_NACK        0x82   // Phản hồi lỗi
+#define CMD_ACK          0x81   // Phản hồi thành công
+#define CMD_NACK         0x82   // Phản hồi lỗi
 ```
+
+> **Lưu ý:** `CMD_READ_CURRENT (0x03)` đã bị xóa. AVR không còn phản hồi theo yêu cầu nữa — thay vào đó tự push dữ liệu định kỳ bằng `CMD_SENSOR_DATA`.
 
 ### 8.2 `frame.h` / `frame.c` — Khung dữ liệu (Frame Protocol)
 
@@ -857,7 +988,35 @@ Trả về shadow register, không cần giao tiếp với 8255 → nhanh hơn.
 
 ---
 
-## 10. app/ — Ứng dụng chính
+### `measurement_service.h` / `measurement_service.c` — Đọc dòng điện
+
+#### Khai báo
+
+```c
+void    measurement_service_init(void);
+uint8_t measurement_service_read(uint8_t index);
+```
+
+#### Implementation
+
+```c
+void measurement_service_init(void) {
+    adc0804_init();   // Khởi tạo ADC0804 + Port C của 8255
+}
+
+uint8_t measurement_service_read(uint8_t index) {
+    if (index >= DEVICE_COUNT)   // Kiểm tra biên
+        return 0;
+    return adc0804_read(index);  // index = kênh mux = kênh ADC
+}
+```
+
+**Vai trò tầng service:**
+- **Boundary check:** `index >= DEVICE_COUNT` → trả `0`, không cho truy cập kênh ngoài phạm vi.
+- **Ẩn chi tiết hardware:** tầng `app` chỉ biết `measurement_service_read(index)`, không cần biết ADC là gì.
+- **Dễ mở rộng:** thêm lọc trung bình, hiệu chỉnh offset hoặc đổi chip ADC chỉ cần sửa trong service.
+
+---
 
 ### `app.h`
 
@@ -872,33 +1031,34 @@ void app_task(void);   // Vòng lặp xử lý chính
 
 ```c
 void app_init() {
-    uart_init();           // 1. Cấu hình chân TX/RX, đặt idle HIGH
-    ppi8255_init();        // 2. Cấu hình control bus, ghi Control Word 0x80
-    memory_init();         // 3. Xóa RAM về 0
-    device_service_init(); // 4. Đặt device_state=0, tắt tất cả thiết bị
-    frame_init();          // 5. Reset state machine frame parser
+    uart_init();                 // 1. Cấu hình chân TX/RX, đặt idle HIGH
+    ppi8255_init();              // 2. Cấu hình control bus, ghi Control Word 0x82
+    memory_init();               // 3. Xóa RAM về 0
+    device_service_init();       // 4. Đặt device_state=0, tắt tất cả thiết bị
+    measurement_service_init();  // 5. Khởi tạo ADC0804 + Port C của 8255
+    frame_init();                // 6. Reset state machine frame parser
 
-    uart_write_string("System Ready\r\n");  // 6. Báo hiệu sẵn sàng
+    uart_write_string("System Ready\r\n");  // 7. Báo hiệu sẵn sàng
 }
 ```
 
-**Thứ tự quan trọng:** UART phải init trước để câu `"System Ready"` được gửi đúng. PPI phải init trước `device_service_init()` vì service sẽ gọi `ppi8255_write_portA()` ngay.
+**Thứ tự quan trọng:** `ppi8255_init()` phải chạy trước `device_service_init()` và `measurement_service_init()` vì cả hai đều gọi xuống driver 8255 ngay lập tức.
 
 #### `app_task()` — Vòng lặp chính
 
 ```c
 void app_task() {
+    // Đếm số vòng lặp để tạo chu kỳ ~500ms
+    // Mỗi vòng lặp tốn khoảng 14ms (1.3ms đọc ADC + 12.5ms gửi UART)
+    // 36 vòng × 14ms ≈ 500ms
+    static uint8_t cycle_counter = 0;
+
+    // Bước 1: LUÔN check lệnh CMD từ PC mỗi vòng lặp
     uint8_t byte;
     frame_t frame;
 
-    // Bước 1: Đọc 1 byte từ UART (non-blocking)
     if (uart_read_char((char*)&byte)) {
-
-        // Bước 2: Đưa byte vào frame parser
         if (frame_parse_byte(byte, &frame)) {
-            uart_write_string("FOK\r\n");  // Debug: frame hợp lệ
-
-            // Bước 3: Xử lý lệnh
             if (frame.cmd == CMD_SET_ALL && frame.len == 1) {
                 device_service_set_all(frame.data[0]);
                 uart_write_string("ACK\r\n");
@@ -911,14 +1071,37 @@ void app_task() {
                 uart_write_string("ACK\r\n");
             }
             else {
-                uart_write_string("NACK\r\n");  // Lệnh không hợp lệ
+                uart_write_string("NACK\r\n");
             }
         }
     }
+
+    // Bước 2: Chỉ đọc sensor + gửi frame mỗi ~500ms
+    cycle_counter++;
+    if (cycle_counter < 36) return;
+    cycle_counter = 0;
+
+    // Phase 1: Đọc 8 kênh dòng điện qua ADC0804 + 74HC4051
+    uint8_t payload[9];
+    for (uint8_t i = 0; i < DEVICE_COUNT; i++) {
+        payload[i] = measurement_service_read(i);
+    }
+
+    // Phase 2: Lấy trạng thái lệnh từ shadow register
+    // Port A KHÔNG bao giờ chuyển sang Input
+    payload[8] = device_service_get_state();
+
+    // Phase 3: Đóng gói và gửi frame
+    // [AA][04][09][I0..I7][state][CS] = 13 bytes tổng
+    frame_send(CMD_SENSOR_DATA, 9, payload);
 }
 ```
 
-**Đặc điểm non-blocking:** `uart_read_char()` trả về `false` ngay nếu không có dữ liệu, nên `app_task()` hoàn thành rất nhanh và không block vòng lặp `while(1)` trong main.
+**Đặc điểm thiết kế:**
+- **Non-blocking:** `uart_read_char()` trả về `false` ngay nếu không có dữ liệu — không block vòng lặp.
+- **Push Mode:** AVR chủ động gửi `CMD_SENSOR_DATA` mỗi ~500ms, PC/ESP32 không cần hỏi.
+- **Hai nhiệm vụ trong 1 hàm:** nhận lệnh điều khiển (mỗi vòng) và gửi dữ liệu cảm biến (mỗi 36 vòng).
+- **`cycle_counter` là `static`:** giữ giá trị giữa các lần gọi `app_task()` mà không cần biến toàn cục.
 
 ---
 
@@ -948,7 +1131,7 @@ Cấu trúc này là pattern chuẩn của hệ thống nhúng bare-metal:
 |---|---|---|
 | `main()` | main.c | Điểm vào chương trình |
 | `app_init()` | app.c | Khởi tạo toàn bộ hệ thống |
-| `app_task()` | app.c | Xử lý UART + frame + lệnh |
+| `app_task()` | app.c | Nhận lệnh UART mỗi vòng; push `CMD_SENSOR_DATA` (9 byte) mỗi ~500ms |
 | `uart_init()` | uart.c | Cấu hình chân TX/RX |
 | `uart_write_char()` | uart.c | Gửi 1 byte qua bit-banging |
 | `uart_write_string()` | uart.c | Gửi chuỗi |
@@ -972,3 +1155,8 @@ Cấu trúc này là pattern chuẩn của hệ thống nhúng bare-metal:
 | `device_service_turn_off()` | device_service.c | Tắt 1 thiết bị theo index |
 | `device_service_toggle()` | device_service.c | Đảo trạng thái 1 thiết bị |
 | `device_service_get_state()` | device_service.c | Đọc shadow register |
+| `measurement_service_init()` | measurement_service.c | Khởi tạo ADC0804 qua 8255 |
+| `measurement_service_read()` | measurement_service.c | Đọc dòng điện theo index |
+| `adc0804_init()` | adc0804.c | Khởi tạo Port C của 8255 cho ADC |
+| `adc0804_read(ch)` | adc0804.c | Chọn kênh, start, đọc Port B của 8255 |
+| `frame_send()` | frame.c | Đóng gói và gửi frame nhị phân qua UART |

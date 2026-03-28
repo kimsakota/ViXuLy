@@ -198,6 +198,12 @@
     <Compile Include="services\device_service.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="services\measurement_service.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="services\measurement_service.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="config" />

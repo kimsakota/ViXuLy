@@ -11,6 +11,7 @@ Thiết kế firmware cho hệ vi xử lý 8-bit dùng ATmega16 làm CPU, có:
 - RAM mô phỏng
 - 8255 memory-mapped I/O
 - UART giao tiếp với lớp ngoài (Terminal trước, ESP32 sau)
+- Đọc dòng điện thiết bị qua ADC0804 + 74HC4051 (thông qua 8255 Port B/C)
 - Kiến trúc module rõ ràng, dễ mở rộng
 
 Hệ thống cần hỗ trợ 2 mức:
@@ -71,7 +72,7 @@ src/
 - **Giai đoạn 3 — Memory map, RAM/ROM mô phỏng:** Đúng bản chất môn vi xử lý, có không gian địa chỉ 16-bit, có ROM, RAM, I/O mapped.
 - **Giai đoạn 4 — CPU bus layer:** Tạo lớp trung gian mô phỏng CPU truy cập bus.
 - **Giai đoạn 5 — Protocol frame UART:** Thay lệnh text bằng frame có cấu trúc để chuẩn bị nối ESP32.
-- **Giai đoạn 6 — ADC và measurement:** Đọc ADC0804, xử lý đo lường, gửi measurement lên UART.
+- **Giai đoạn 6 — ADC và measurement ✓:** Đọc ADC0804 qua 8255 Port B/C, 74HC4051 chọn kênh, gửi kết quả về PC bằng frame `CMD_READ_CURRENT (0x03)`.
 
 ## 5. Memory map đề xuất
 
@@ -96,13 +97,10 @@ src/
 - `CHECKSUM = XOR(HEADER, CMD, LEN, Data...)`
 
 **Mã lệnh (CMD):**
-- `0x01`: Set all devices
-- `0x02`: Set single device
-- `0x03`: Get state
-- `0x04`: Memory write
-- `0x05`: Memory read
-- `0x81`: ACK
-- `0x82`: NACK
-- `0x10`: Measurement report
+- `0x01`: Set all devices — đặt trạng thái toàn bộ 8 thiết bị
+- `0x02`: Set single device — bật/tắt 1 thiết bị theo index
+- `0x03`: Read current — đọc dòng điện 1 thiết bị qua ADC0804
+- `0x81`: ACK — phản hồi thành công (ASCII debug)
+- `0x82`: NACK — phản hồi lỗi (ASCII debug)
 
 *Lưu ý: Mọi quy ước về code style sẽ được tham chiếu trong tài liệu docs/agents.md.*

@@ -8,7 +8,7 @@
 // Uses 0xAA value so the system knows when a new frame begins.
 #define FRAME_HEADER 0xAA
 // FRAME_MAX_DATA is the max number of data bytes in a single frame.
-#define FRAME_MAX_DATA 8
+#define FRAME_MAX_DATA 16
 
 // Data structure storing information of a parsed frame: cmd (1 byte), 
 // len (1 byte - number of actual data bytes), and data array.
