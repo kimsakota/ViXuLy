@@ -1,7 +1,7 @@
 ﻿# Tài liệu Chi tiết: Đo Dòng Điện AC — Từng Cơ Chế, Từng Hàm
 
 > Tài liệu này mô tả **toàn bộ luồng dữ liệu** từ khi dòng điện AC chạy qua tải,
-> qua cảm biến ACS712, qua mux 74HC4051, qua ADC0804, qua bus 8255, đến ATmega xử lý,
+> qua cảm biến Cảm biến dòng xuyến, qua mux 74HC4051, qua ADC0804, qua bus 8255, đến ATmega xử lý,
 > rồi truyền về PC qua UART. Bao gồm cơ chế CPU, RAM, ROM và từng hàm trong firmware.
 
 ---
@@ -9,7 +9,7 @@
 ## MỤC LỤC
 
 1. [Tổng quan pipeline](#1-tổng-quan-pipeline)
-2. [Phần cứng: ACS712 - 74HC4051 - ADC0804 - 8255](#2-phần-cứng)
+2. [Phần cứng: Cảm biến dòng xuyến - 74HC4051 - ADC0804 - 8255](#2-phần-cứng)
 3. [Kiến trúc bộ nhớ: ROM, RAM, I/O Map](#3-kiến-trúc-bộ-nhớ)
 4. [Tầng CPU Bus](#4-tầng-cpu-bus)
 5. [Driver 8255 — ppi8255.c](#5-driver-8255)
@@ -30,7 +30,7 @@
 [Dòng điện AC qua tải]
         |
         v
-[ACS712] — cảm biến dòng, chuyển dòng -> điện áp
+[Cảm biến dòng xuyến] — cảm biến dòng, chuyển dòng -> điện áp
         |  VIOUT = VCC/2 + sensitivity x I_AC
         v
 [74HC4051] — mux analog 8-kênh, chọn kênh bằng Port C của 8255
@@ -53,15 +53,15 @@
 
 ## 2. Phần cứng
 
-### 2.1 ACS712 — Cảm biến dòng điện
+### 2.1 Cảm biến dòng xuyến — Cảm biến dòng điện
 
-ACS712 là cảm biến dòng hiệu ứng Hall. Dòng điện AC chạy qua tải tạo từ trường,
-ACS712 chuyển thành điện áp tuyến tính:
+Cảm biến dòng xuyến là biến dòng dạng xuyến (Current Transformer). Dòng điện AC chạy qua tải tạo từ trường,
+Cảm biến dòng xuyến chuyển thành điện áp tuyến tính:
 
 ```
 VIOUT = VCC/2 + Sensitivity x I
 
-Với VCC = 5V, Sensitivity = 185 mV/A (ACS712-05B):
+Với VCC = 5V, Sensitivity = 185 mV/A (Biến dòng CT Sensor):
   I = 0A   -> VIOUT = 2.500 V  -> ADC = 128
   I = +9.19A -> VIOUT = 4.20 V -> ADC = 215  (đỉnh dương, I_rms = 6.5A)
   I = -9.19A -> VIOUT = 0.80 V -> ADC = 41   (đỉnh âm)
@@ -543,7 +543,7 @@ void uart_write_char(char c) {
 # Frame nhận: [AA][04][09][p0..p7][state][CS] = 13 bytes
 $peakLsb = $frameBytes[3]        # Ví dụ: 87
 
-$sensitivityVA = 0.185           # ACS712-05B: 185mV/A
+$sensitivityVA = 0.185           # Biến dòng CT Sensor: 185mV/A
 $sqrt2 = [math]::Sqrt(2)
 
 $I_peak_A = $peakLsb * 5.0 / 256.0 / $sensitivityVA
@@ -571,7 +571,7 @@ P_W       = V_rms * I_rms_A                 [Watt, tải thuần trở]
 
 ```
 [Dòng AC 6.5A RMS qua tải]
-  -> ACS712: VIOUT dao động 0.80V..4.20V xung quanh 2.5V
+  -> Cảm biến dòng xuyến: VIOUT dao động 0.80V..4.20V xung quanh 2.5V
   -> 74HC4051: chọn kênh qua PC4/PC5/PC6 (1 lần ghi, không glitch)
   -> ADC0804: trigger bởi WR# pulse (PC1), convert 8-bit SAR ~13µs
   -> D0..D7 -> 8255 Port B (Input)
@@ -612,5 +612,5 @@ P_W       = V_rms * I_rms_A                 [Watt, tải thuần trở]
    Giải pháp: X1..X7 -> R 10k -> midpoint(VCC/2) <- R 10k -> GND.
 
 4. **Gate đo theo device_state là workaround cho prototype 1 cảm biến.**
-   Khi lắp đủ 8 ACS712 thực tế: xóa điều kiện `(device_state & (1<<i))`
+   Khi lắp đủ 8 Cảm biến dòng xuyến thực tế: xóa điều kiện `(device_state & (1<<i))`
    trong app_task() để phát hiện ngắn mạch khi thiết bị TẮT.

@@ -1,34 +1,35 @@
-# KHUNG NỘI DUNG THUYẾT TRÌNH (>= 30 SLIDES)
+﻿# KHUNG NỘI DUNG THUYẾT TRÌNH (>= 30 SLIDES)
 
-**Môn học:** Technical Writing and Presentation (Đại học Bách Khoa Hà Nội)
-**Đề tài:** Hệ thống Giám sát dòng điện 8 kênh và Điều khiển thiết bị ứng dụng IoT (ATmega16 + 8255 + ADC0804 + ESP32)
+**Môn học:** Kỹ thuật Vi xử lý & Technical Writing and Presentation (Đại học Bách Khoa Hà Nội)
+**Đề tài:** Ứng dụng hệ vi xử lý AVR (ATmega16) và các IC ngoại vi trong giám sát dòng điện 8 kênh & điều khiển thiết bị IoT
 
 > **Cam kết tuân thủ 3 Laws (Technical Writing HUST):**
-> 1. **Clear Message (Assertion-Evidence):** Tiêu đề là một câu khẳng định thông điệp ("Slide X: Cảm biến ACS712 trích xuất dòng điện tuyến tính...").
+> 1. **Clear Message (Assertion-Evidence):** Tiêu đề là một câu khẳng định thông điệp ("Slide X: Cảm biến dòng xuyến trích xuất dòng điện tuyến tính...").
 > 2. **Cấu trúc dạng cây (Tree-based Structure):** Top-down mạch lạc tuân theo 9 bước chuẩn của Báo cáo đồ án.
 > 3. **Trực quan hóa (Visual Evidence):** Thay thế chữ bằng Đồ thị (Graph), Sơ đồ (Diagram), Phương trình (Equation), Lưu đồ (Flowchart), Gantt Chart.
 
 ---
 
-## PHẦN 1: MỞ ĐẦU - PHÂN TÍCH ĐỀ TÀI VÀ KẾ HOẠCH (Tương ứng Bước 1 & 2)
+## [SLIDE CHUYỂN PHẦN 1] MỞ ĐẦU - PHÂN TÍCH ĐỀ TÀI VÀ KẾ HOẠCH (Tương ứng Bước 1 & 2)
+*(Ghi chú: Slide này chỉ để 1 tiêu đề lớn lùi giữa màn hình để Hội đồng biết luồng thuyết trình bắt đầu đi vào Phần 1)*
 
 **SLIDE 1: Trang bìa (Title Slide)**
-- **Tiêu đề:** Thiết kế Hệ thống Giám sát Dòng điện đa kênh và Cảnh báo Đo lường ứng dụng IoT.
+- **Tiêu đề:** Nghiên cứu và Thiết kế Hệ thống Vi xử lý ứng dụng trong Giám sát dòng điện và Điều khiển đa kênh.
 - **Phụ đề:** [Hình ảnh] Ảnh ngoại quan sản phẩm thực tế và Logo HUST.
 - **Thông tin:** Tên Sinh viên, MSV, Tên Giảng viên.
 
-**SLIDE 2: Nội dung trình bày tuân theo cấu trúc Top-Down (Agenda)**
-- **Nội dung:** [Diagram] Sơ đồ cây (Tree-diagram) các phần chính.
-  - Nhánh 1: Phân tích và Lập kế hoạch.
-  - Nhánh 2: Sơ đồ khối và Thiết kế nguyên lý chi tiết (Hardware).
-  - Nhánh 3: Tối ưu phần mềm và Giao thức hệ thống (Firmware & Software).
-  - Nhánh 4: Thiết kế PCB, Hoàn thiện và Kiểm thử (Testing & Packaging).
+**SLIDE 2: Nội dung trình bày (Agenda)**
+- **Nội dung:** [Diagram] Sơ đồ cây (Tree-diagram) 4 hạng mục cốt lõi:
+  1. Đặt vấn đề và Mục tiêu
+  2. Thiết kế Phần cứng
+  3. Lập trình Phần mềm
+  4. PCB và Kiểm thử
 
 **SLIDE 3: Chi phí và độ phức tạp hạn chế việc mở rộng giám sát năng lượng trong công nghiệp (Motivation)**
 - **Nội dung:** [Graph] Biểu đồ cột/đường so sánh chi phí và số kênh đo của các giải pháp hiện tại vs thiết bị chuyên dụng PLC.
 
-**SLIDE 4: Giải pháp dùng vi điều khiển ATmega16 giải quyết bài toán lớn với chi phí < 500.000đ (Objectives)**
-- **Nội dung:** Khẳng định 3 mục tiêu cốt lõi: Đo 8 kênh đồng thời, đóng cắt Relay độc lập, đẩy dữ liệu lên IoT (MQTT) ổn định.
+**SLIDE 4: Giải pháp dùng hệ vi xử lý (ATmega16 + 8255) tối ưu hóa tài nguyên IO với chi phí < 500.000đ (Objectives)**
+- **Nội dung:** Khẳng định 3 mục tiêu cốt lõi: Thiết kế hệ vi xử lý chuẩn với Bus dữ liệu ngoài, thu thập 8 kênh dòng điện, và truyền số liệu qua UART/IoT.
 
 **SLIDE 5: Chỉ tiêu kỹ thuật định cỡ không gian thiết kế của phần cứng và luồng dữ liệu (Specifications)**
 - **Nội dung:** [Table] Bảng chỉ tiêu - Số kênh, Phân giải (8-bit ~0.04A/bước), Giao thức kết nối, Chu kỳ lấy mẫu định kì (10Hz).
@@ -38,7 +39,8 @@
 
 ---
 
-## PHẦN 2: XÂY DỰNG SƠ ĐỒ KHỐI VÀ DATA FLOW (Tương ứng Bước 3)
+## [SLIDE CHUYỂN PHẦN 2] XÂY DỰNG SƠ ĐỒ KHỐI VÀ DATA FLOW (Tương ứng Bước 3)
+*(Ghi chú: Tiêu đề lớn giữa màn hình "Thiết kế Kiến trúc Phần cứng Vi xử lý" để báo hiệu chuyển mục 2)*
 
 **SLIDE 7: Kiến trúc tổng thể được phân cấp thành 4 Lớp chức năng phần cứng (Architecture)**
 - **Nội dung:** [Diagram] Sơ đồ khối hệ thống (Từ nguồn cấp tĩnh, Lớp thu thập - Sensor, Lớp xử lý trung tâm MCU+8255, Lớp truyền động (Relay), tới Lớp điện toán đám mây).
@@ -48,9 +50,10 @@
 
 ---
 
-## PHẦN 3: THIẾT KẾ CHI TIẾT VÀ MẠCH NGUYÊN LÝ (Tương ứng Bước 4 & 5)
+## [SLIDE CHUYỂN PHẦN 3] THIẾT KẾ CHI TIẾT VÀ MẠCH NGUYÊN LÝ (Tương ứng Bước 4 & 5)
+*(Ghi chú: Tiếp tục nhấn mạnh phần cứng ngoại vi ghép nối với hệ thống vi xử lý ATmega16)*
 
-**SLIDE 9: Cảm biến tuyến tính ACS712 trích xuất dòng tĩnh với hệ số 185mV/A (Sensing Unit)**
+**SLIDE 9: Cảm biến dòng xuyến trích xuất dòng tĩnh với hệ số 185mV/A (Sensing Unit)**
 - **Nội dung:** [Equation] $I_{measure} = (V_{out} - 2.5) / 0.185$. Biểu diễn đồ thị độ dốc [Graph].
 - **Key point:** Cách ly Galvanic giữ an toàn tuyệt đối cho board điều khiển.
 
@@ -68,7 +71,8 @@
 
 ---
 
-## PHẦN 4: KIẾN TRÚC PHẦN MỀM VÀ LẬP TRÌNH NHÚNG (Tương ứng Bước 6 - Software Highlight)
+## [SLIDE CHUYỂN PHẦN 4] KIẾN TRÚC PHẦN MỀM VÀ KỸ THUẬT LẬP TRÌNH ĐIỀU KHIỂN (Tương ứng Bước 6 - Firmware Highlight)
+*(Ghi chú: Tiêu đề lớn giữa màn hình "Kỹ thuật Lập trình và Tổ chức luồng dữ liệu" báo hiệu hệ thống đã hoàn thiện phần cứng và sang phần viết code Vi xử lý)*
 
 **SLIDE 14: Mã nguồn C nhúng áp dụng mô hình Đa tầng (Layered Architecture) tiêu chuẩn công nghiệp**
 - **Nội dung:** [Diagram] Trực quan hóa cây thư mục dự án:
@@ -78,11 +82,11 @@
   4. **App:** Kịch bản luồng chính (`app.c`)
 - **Key point:** Triệt tiêu hoàn toàn cách viết cục bộ "Spaghetti Code".
 
-**SLIDE 15: Phương pháp Ánh xạ Bộ nhớ (Memory-Mapped I/O) khai phóng sức mạnh xử lý thanh ghi**
-- **Nội dung:** [Diagram] Phân bổ Memory Map (thể hiện trong `core/memory.c`). Thay vì bit-bang chậm chạp, CPU Bus giao tiếp trực tiếp với không gian địa chỉ 8255 siêu nhanh.
+**SLIDE 15: Kỹ thuật phân gian bộ nhớ (Memory-Mapped I/O) mở rộng ngoại vi theo chuẩn kiến trúc Vi xử lý**
+- **Nội dung:** [Diagram] Phân bổ Memory Map (thể hiện trong `core/memory.c`). Vi xử lý (Core) giao tiếp trực tiếp với không gian địa chỉ của 8255, ADC qua Address/Data Bus & Control Bus thay vì I/O Port thông thường.
 
-**SLIDE 16: Module Measurement Service phân luồng dữ liệu đo lường liên tục qua định thời máy trạng thái**
-- **Nội dung:** [Flowchart] Lưu đồ tuần tự trong `measurement_service.c`: Set MUX -> Trigger WR của ADC -> Wait ngắt INTR -> Tính toán Dòng điện $\rightarrow$ Thay đổi logic App.
+**SLIDE 16: Ứng dụng ngắt ngoài (External Interrupt) tối ưu hóa chu kỳ lấy mẫu ADC và tiết kiệm CPU**
+- **Nội dung:** [Flowchart] Lưu đồ tuần tự trong `measurement_service.c`: VXL Set MUX -> Trigger WR của ADC -> CPU làm việc khác -> Chờ ngắt ngoài (INTR) -> Đọc giá trị Dòng điện $\rightarrow$ Chuyển kênh. CPU không bị block vòng lặp chờ.
 
 **SLIDE 17: Giản đồ định thời (Timing Diagram) rập khuôn tốc độ lấy mẫu bắt buộc của phần cứng**
 - **Nội dung:** [Graph] Sự tương quan thời gian độ trễ đóng MUX (Delay) với độ dài chu kì ADC biến đổi. Tránh xung đột luồng thu thập.
@@ -98,7 +102,8 @@
 
 ---
 
-## PHẦN 5: THIẾT KẾ PCB, GIA CÔNG & KIỂM THỬ ĐÁNH GIÁ (Tương ứng Bước 7 & Bước 8)
+## [SLIDE CHUYỂN PHẦN 5] THIẾT KẾ PCB, GIA CÔNG & THỰC NGHIỆM ĐÁNH GIÁ (Tương ứng Bước 7 & Bước 8)
+*(Ghi chú: Chuyển sang phần minh chứng kỹ thuật là board mạch chạy thực tế đo lường đụng chạm tới tải xoay chiều)*
 
 **SLIDE 21: Layout Mạch in (PCB) được thiết kế cắt rãnh chống rò điện (Milling) gia tăng tuổi thọ**
 - **Nội dung:** [Diagram] Khằng định quy tắc chia tách Polygon/Plane: Nền cao áp AC (lưới Relay) cách ly tuyệt đối với nền DC Digital GND của vi điều khiển.
@@ -120,9 +125,10 @@
 
 ---
 
-## PHẦN 6: TỔNG KẾT & PHẢN BIỆN (Tương ứng Bước 9)
+## [SLIDE CHUYỂN PHẦN 6] TỔNG KẾT & PHẢN BIỆN (Tương ứng Bước 9)
+*(Ghi chú: Đóng lại vấn đề, nhấn mạnh về tính khả thi của hệ vi xử lý AVR khi giải một bài toán công nghiệp vừa và nhỏ)*
 
-**SLIDE 27: Kết luận Hoàn tất toàn diện 3 khía cạnh: Lắp ráp phần cứng - Tối ưu phần mềm nhúng - Kết nối không dây**
+**SLIDE 27: Kết luận Hoàn tất toàn diện 3 khía cạnh: Thiết kế lõi Vi xử lý - Tối ưu điều khiển ngoại vi - Tích hợp IoT**
 - **Nội dung:** Khẳng định 3 kết quả thực tiễn đạt được sát với mục tiêu ban đầu từ Slide 4.
 
 **SLIDE 28: Huấn luyện AI nhận dạng dị thường năng lượng trong định hướng phát triển tương lai (Future Works)**

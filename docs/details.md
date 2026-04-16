@@ -1,4 +1,4 @@
-# Tài liệu Chi tiết Dự án ViXuLy
+﻿# Tài liệu Chi tiết Dự án ViXuLy
 
 > **Mục tiêu dự án:** Điều khiển thiết bị ngoại vi (đèn, relay...) thông qua giao tiếp UART từ máy tính, sử dụng vi điều khiển AVR ATmega kết nối với chip PPI Intel 8255.
 

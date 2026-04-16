@@ -1,4 +1,4 @@
-# Cơ chế hoạt động & Sơ đồ kiến trúc
+﻿# Cơ chế hoạt động & Sơ đồ kiến trúc
 
 Tài liệu này trình bày chi tiết luồng dữ liệu, chức năng của 
 các khối trong phần mềm và cách dữ liệu được truyền từ thiết 

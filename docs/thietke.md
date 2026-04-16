@@ -16,7 +16,7 @@
 5. [8255 Port A → ULN2803 → Relay](#5-port-a-relay)
 6. [8255 Port B ← ADC0804 — Data 8-bit](#6-port-b-adc)
 7. [8255 Port C → ADC0804 + 74HC4051](#7-port-c-adc-mux)
-8. [74HC4051 ← ACS712 — 8 kênh đo dòng](#8-mux-acs712)
+8. [74HC4051 ← Cảm biến dòng xuyến — 8 kênh đo dòng](#8-mux-Cảm biến dòng xuyến)
 9. [ATmega16 ↔ ESP32 — Soft UART + Level Shift](#9-uart-esp32)
 10. [Mạch nguồn](#10-nguon)
 11. [Mạch thạch anh + Reset ATmega16](#11-crystal-reset)
@@ -35,7 +35,7 @@
 | 3 | ADC 8-bit | ADC0804LCN | DIP-20 | 1 | |
 | 4 | MUX Analog | 74HC4051 | DIP-16 | 1 | 8 kênh analog |
 | 5 | Darlington Array | ULN2803A | DIP-18 | 1 | Driver 8 relay |
-| 6 | Cảm biến dòng | ACS712-05B Module | Module | 8 | 185 mV/A, max 5A |
+| 6 | Cảm biến dòng | Biến dòng dạng xuyến (CT Sensor) | Module | 8 | 185 mV/A, max 5A |
 | 7 | WiFi MCU | ESP32 DevKit V1 | Module | 1 | UART bridge → MQTT |
 | 8 | Relay | 5V SPDT | PCB mount | 8 | Cuộn 5V, tiếp điểm 10A |
 | 9 | Thạch anh | 8 MHz | HC-49S | 1 | ATmega16 |
@@ -45,7 +45,7 @@
 | 13 | Tụ clock ADC | 150 pF | DIP | 1 | RC clock ADC0804 |
 | 14 | R clock ADC | 10 kΩ | DIP | 1 | RC clock ADC0804 |
 | 15 | R phân áp VREF/2 | 10 kΩ | DIP | 2 | Tạo 2.5V cho ADC VREF/2 |
-| 16 | R chống floating MUX | 10 kΩ | DIP | 8 | Kênh chưa có ACS712 |
+| 16 | R chống floating MUX | 10 kΩ | DIP | 8 | Kênh chưa có Cảm biến dòng xuyến |
 | 17 | R level shift TX (trên) | 10 kΩ | DIP | 1 | ATmega TX → ESP32 |
 | 18 | R level shift TX (dưới) | 20 kΩ | DIP | 1 | ATmega TX → ESP32 |
 | 19 | R pull-up RESET | 10 kΩ | DIP | 1 | ATmega16 RESET |
@@ -61,7 +61,7 @@
 | 29 | Cuộn choke AVCC | 100 µH | DIP | 1 | Lọc nhiễu nguồn analog |
 | 30 | Header ISP | 6-pin | Header | 1 | Nạp firmware AVR |
 | 31 | Header UART debug | 3-pin | Header | 1 | GND / TX / RX |
-| 32 | Header ACS712 | 3-pin | Connector | 8 | VCC / GND / OUT |
+| 32 | Header Cảm biến dòng xuyến | 3-pin | Connector | 8 | VCC / GND / OUT |
 
 ---
 
@@ -72,9 +72,9 @@
                                           │
                               ┌───────────┼───────────────────────┐
                               │           │                       │
-                         ATmega16       8255                  ACS712 x8
+                         ATmega16       8255                  Cảm biến dòng xuyến x8
                          ADC0804      74HC4051                Relay x8
-                         ULN2803                              ACS712 VCC
+                         ULN2803                              Cảm biến dòng xuyến VCC
 
 [+5V] → [AMS1117-3.3] → [+3.3V] → ESP32 VIN (nếu không dùng USB)
 
@@ -107,9 +107,9 @@
  └─────────────────────────────────────────────────────────────────┘
 
  74HC4051 COM/Y (pin 3) ──────────►  ADC0804 VIN+ (pin 6)
- 74HC4051 X0..X7        ◄──────────  ACS712 VIOUT kênh 0..7
+ 74HC4051 X0..X7        ◄──────────  Cảm biến dòng xuyến VIOUT kênh 0..7
 
- ACS712:  IP+ → Dây pha AC vào  |  IP- → Dây pha AC ra tải
+ Cảm biến dòng xuyến: Luồn dây pha AC tải qua lỗ xuyến
 ```
 
 ---
@@ -321,27 +321,27 @@ Relay NC  ───── để hở
 
 ---
 
-## 8. 74HC4051 ← ACS712 (8 kênh đo dòng)
+## 8. 74HC4051 ← Cảm biến dòng xuyến (8 kênh đo dòng)
 
 ### 8.1 74HC4051 — Toàn bộ chân (DIP-16)
 
 | 74HC4051 | Pin | Nối vào |
 |----------|-----|---------|
 | COM/Y | 1 | ADC0804 VIN+ (pin 6) |
-| CH4 (X4) | 2 | ACS712 kênh 4 — VIOUT |
-| CH6 (X6) | 3 | ACS712 kênh 6 — VIOUT |
-| CH7 (X7) | 4 | ACS712 kênh 7 — VIOUT |
-| CH5 (X5) | 5 | ACS712 kênh 5 — VIOUT |
+| CH4 (X4) | 2 | Cảm biến dòng xuyến kênh 4 — VIOUT |
+| CH6 (X6) | 3 | Cảm biến dòng xuyến kênh 6 — VIOUT |
+| CH7 (X7) | 4 | Cảm biến dòng xuyến kênh 7 — VIOUT |
+| CH5 (X5) | 5 | Cảm biến dòng xuyến kênh 5 — VIOUT |
 | /INH | 6 | GND *(luôn enable)* |
 | VEE | 7 | GND *(single supply 5V)* |
 | GND | 8 | GND |
-| CH0 (X0) | 9 | ACS712 kênh 0 — VIOUT |
-| CH1 (X1) | 10 | ACS712 kênh 1 — VIOUT |
+| CH0 (X0) | 9 | Cảm biến dòng xuyến kênh 0 — VIOUT |
+| CH1 (X1) | 10 | Cảm biến dòng xuyến kênh 1 — VIOUT |
 | S0 / A | 11 | 8255 PC4 (pin 13) |
 | S1 / B | 12 | 8255 PC5 (pin 12) |
 | S2 / C | 13 | 8255 PC6 (pin 11) |
-| CH3 (X3) | 14 | ACS712 kênh 3 — VIOUT |
-| CH2 (X2) | 15 | ACS712 kênh 2 — VIOUT |
+| CH3 (X3) | 14 | Cảm biến dòng xuyến kênh 3 — VIOUT |
+| CH2 (X2) | 15 | Cảm biến dòng xuyến kênh 2 — VIOUT |
 | VCC | 16 | +5V |
 
 ### 8.2 Bảng chọn kênh MUX
@@ -357,22 +357,22 @@ Relay NC  ───── để hở
 | 1 | 1 | 0 | X6 | 3  | Thiết bị 6 |
 | 1 | 1 | 1 | X7 | 4  | Thiết bị 7 |
 
-### 8.3 ACS712 Module — 1 module (nhân × 8)
+### 8.3 Cảm biến dòng xuyến — 1 module (nhân × 8)
 
 ```
 Phần tín hiệu thấp:
-  ACS712 VCC  ── +5V
-  ACS712 GND  ── GND
-  ACS712 OUT  ── 74HC4051 CHx
+  Cảm biến dòng xuyến VCC  ── +5V
+  Cảm biến dòng xuyến GND  ── GND
+  Cảm biến dòng xuyến OUT  ── 74HC4051 CHx
 
 Phần dòng điện AC (tách hoàn toàn khỏi phần số):
-  ACS712 IP+  ── Dây pha AC vào (từ nguồn 220V)
-  ACS712 IP-  ── Dây pha AC ra  (đến tải: đèn, thiết bị)
+  AC line luồn qua tâm biến dòng xuyến (không đấu vào mạch)
+  Đảm bảo cách điện vật lý với mạch đo lường
 ```
 
-### 8.4 Chống floating kênh chưa có ACS712
+### 8.4 Chống floating kênh chưa có Cảm biến dòng xuyến
 
-Kênh chưa lắp ACS712 **bắt buộc nối về 2.5V** (tránh nhiễu crosstalk):
+Kênh chưa lắp Cảm biến dòng xuyến **bắt buộc nối về 2.5V** (tránh nhiễu crosstalk):
 
 ```
 +5V ──[R=10kΩ]──┬── 74HC4051 CHx
@@ -452,7 +452,7 @@ OUT ──[C=100nF    ]── GND
 
 | Domain | Điện áp | Cấp cho |
 |--------|---------|---------|
-| +5V Digital | 5.0V | ATmega16, 8255, ADC0804, 74HC4051, ULN2803, ACS712, Relay |
+| +5V Digital | 5.0V | ATmega16, 8255, ADC0804, 74HC4051, ULN2803, Cảm biến dòng xuyến, Relay |
 | +5V Analog (AVCC) | 5.0V qua L=100µH | ATmega16 AVCC pin 30 |
 | +3.3V | 3.3V | ESP32 VIN |
 
@@ -494,7 +494,7 @@ ATmega XTAL1 (pin 13) ──┬── [XTAL 8MHz HC-49S] ──┬── ATmega 
 | 8255 VCC | pin 26 | 100nF |
 | ADC0804 VCC | pin 20 | 100nF |
 | 74HC4051 VCC | pin 16 | 100nF |
-| ACS712 VCC | mỗi module | 100nF |
+| Cảm biến dòng xuyến VCC | mỗi module | 100nF |
 
 ---
 
@@ -585,11 +585,11 @@ ATmega XTAL1 (pin 13) ──┬── [XTAL 8MHz HC-49S] ──┬── ATmega 
 
 1. **Star grounding:** Tách AGND (ADC0804 pin 8, 10) và DGND, gặp nhau tại 1 điểm duy nhất ở connector nguồn.
 2. **Data Bus trace:** Trace PORTD (8 dây) giữ ngắn, song song nhau. Đặt 8255 gần ATmega nhất.
-3. **Relay isolation:** Phần relay và trace AC đặt cách phần analog ADC/ACS712 tối thiểu 5 mm. Dùng khe cắt PCB nếu cần.
+3. **Relay isolation:** Phần relay và trace AC đặt cách phần analog ADC/Cảm biến dòng xuyến tối thiểu 5 mm. Dùng khe cắt PCB nếu cần.
 4. **Diode flyback relay:** 1N4007 song song mỗi cuộn relay — Cathode nối +5V, Anode nối OUT ULN2803.
 5. **Decoupling:** Mỗi IC có 1 tụ 100nF, trace về GND dưới 5 mm.
 6. **ISP header 6-pin:** MOSI / MISO / SCK / RESET / VCC / GND — để nạp firmware AVR không cần tháo IC.
-7. **ACS712 AC trace:** Trace IP+/IP− rộng ≥ 2 mm, chịu dòng. Tách hoàn toàn khỏi phần tín hiệu số.
+7. **Cảm biến dòng xuyến AC trace:** Trace IP+/IP− rộng ≥ 2 mm, chịu dòng. Tách hoàn toàn khỏi phần tín hiệu số.
 8. **XTAL layout:** Thạch anh và 2 tụ 22pF đặt sát XTAL1/XTAL2, trace ngắn nhất có thể, không đi trace khác qua vùng này.
 9. **VREF/2 ADC:** Tụ lọc 100nF đặt sát chân VREF/2 (pin 9 ADC0804) để giảm nhiễu.
 10. **Nguồn analog AVCC:** Đi riêng đường trace từ +5V qua cuộn L=100µH → tụ lọc → AVCC pin 30 ATmega.

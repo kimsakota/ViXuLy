@@ -1,4 +1,4 @@
-# Coding Rules cho Copilot
+﻿# Coding Rules cho Copilot
 
 Dưới đây là một số luật và quy định bắt buộc khi phát triển thêm mã nguồn trong dự án này:
 
