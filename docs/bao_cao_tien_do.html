@@ -1,0 +1,581 @@
+﻿<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Báo Cáo Tiến Độ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f0f4f8;color:#1a202c;overflow:hidden}
+.deck{width:100vw;height:100vh;position:relative}
+.slide{width:100%;height:100%;position:absolute;top:0;left:0;display:none;padding:60px 80px;flex-direction:column;justify-content:center}
+.slide.active{display:flex}
+.slide-1{background:linear-gradient(135deg,#1e3a8a,#1d4ed8,#3b82f6);color:#fff;text-align:center;align-items:center}
+.slide-1 h1{font-size:3.2em;font-weight:800;line-height:1.2;margin-bottom:20px}
+.slide-1 .sub{font-size:1.3em;opacity:.85;margin-bottom:30px}
+.slide-1 .chips{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.slide-1 .chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:8px 18px;font-size:1em;font-weight:600}
+.slide-n{background:#fff}
+.slide-n h2{font-size:2.2em;font-weight:800;color:#1e3a8a;border-left:6px solid #3b82f6;padding-left:20px;margin-bottom:40px}
+.slide-n h3{font-size:1.3em;font-weight:700;color:#1e3a8a;margin-bottom:14px}
+.card-row{display:flex;gap:24px;margin-bottom:20px;flex-wrap:wrap}
+.card{flex:1;background:#f8faff;border:2px solid #e2e8f0;border-radius:16px;padding:28px;position:relative;min-width:280px}
+.card.blue{border-color:#3b82f6;background:#eff6ff}
+.card.green{border-color:#10b981;background:#f0fdf4}
+.card.orange{border-color:#f59e0b;background:#fffbeb}
+.card.red{border-color:#ef4444;background:#fef2f2}
+.card.purple{border-color:#7c3aed;background:#f5f3ff}
+.card.yellow{border-color:#eab308;background:#fefce8}
+.card h3{font-size:1.3em;font-weight:700;color:#1e3a8a;margin-bottom:16px}
+.card ul{list-style:none;padding:0}
+.card ul li{padding:8px 0 8px 28px;font-size:1.05em;border-bottom:1px solid #e2e8f0;position:relative;line-height:1.4}
+.card ul li:last-child{border:none}
+.card ul li::before{content:"▹";position:absolute;left:0;color:#3b82f6;font-size:1.1em}
+.card ul li.marker-red::before{content:"✗";color:#dc2626}
+.card ul li.marker-green::before{content:"✓";color:#16a34a}
+.badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:.8em;font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px}
+.badge-done{background:#dcfce7;color:#166534}
+.badge-wip{background:#fef3c7;color:#92400e}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-red{background:#fee2e2;color:#991b1b}
+.progress-wrap{background:#e2e8f0;border-radius:8px;height:18px;overflow:hidden;margin-top:10px}
+.progress-bar{height:100%;background:linear-gradient(90deg,#1d4ed8,#3b82f6);border-radius:8px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:1em}
+th{background:#1e3a8a;color:#fff;padding:10px 14px;text-align:left}
+td{padding:10px 14px;border-bottom:1px solid #e2e8f0}
+tr:hover td{background:#eff6ff}
+td code{background:#e2e8f0;border-radius:4px;padding:2px 6px;font-family:monospace;font-size:.88em;color:#1e3a8a}
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-top:20px}
+.flow-item{background:#eff6ff;border:2px solid #3b82f6;border-radius:10px;padding:14px 18px;font-size:.95em;font-weight:600;color:#1e3a8a;text-align:center;flex:1;min-width:100px}
+.flow-arrow{font-size:1.8em;color:#3b82f6;padding:0 6px}
+.flow-item.hw{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
+.flow-item.sw{background:#dcfce7;border-color:#16a34a;color:#166534}
+.flow-item.io{background:#fff7ed;border-color:#ea580c;color:#9a3412}
+.nav{position:fixed;bottom:30px;right:40px;display:flex;gap:14px;z-index:999}
+.nav button{background:#1e3a8a;color:#fff;border:none;padding:12px 28px;border-radius:10px;font-size:1.05em;font-weight:600;cursor:pointer;transition:.2s}
+.nav button:hover{background:#2563eb}
+.counter{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);font-size:1em;font-weight:600;color:#475569}
+.last-slide{background:linear-gradient(135deg,#064e3b,#065f46,#059669);color:#fff;text-align:center;align-items:center}
+.last-slide h1{font-size:3.5em;font-weight:800}
+.last-slide p{font-size:1.4em;opacity:.85;margin-top:20px}
+code{background:#e2e8f0;border-radius:6px;padding:3px 8px;font-family:monospace;font-size:.9em;color:#1e3a8a}
+.two-col{display:flex;gap:40px;flex-wrap:wrap}
+.two-col>div{flex:1;min-width:300px}
+.mini-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mini-box{background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:8px 14px;font-size:.9em;font-weight:600;color:#1e3a8a;text-align:center}
+.mini-box.purple{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6}
+.mini-box.green{background:#dcfce7;border-color:#86efac;color:#166534}
+.mini-box.orange{background:#fff7ed;border-color:#fdba74;color:#9a3412}
+.mini-arrow{color:#3b82f6;font-weight:700}
+.sub-label{font-size:.75em;color:#64748b;font-weight:400;display:block;margin-top:2px}
+.pin-table{font-family:monospace;font-size:.88em;border-radius:10px;overflow:hidden}
+.pin-table th{background:#1e3a8a}
+.pin-table tr:nth-child(even) td{background:#f8faff}
+.pin-table tr:hover td{background:#eff6ff}
+.warning-box{background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:16px 20px;margin-top:12px}
+.warning-box p{margin-bottom:6px;font-size:.95em;color:#991b1b;font-weight:600}
+.schematic-block{background:#f8faff;border:2px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px}
+.schematic-block h4{font-size:1em;font-weight:700;color:#1e3a8a;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
+.tag{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:6px;padding:2px 8px;font-size:.8em;font-weight:700;margin-right:4px}
+.tag.green{background:#dcfce7;color:#166534}
+.tag.orange{background:#fff7ed;color:#9a3412}
+.tag.purple{background:#ede9fe;color:#5b21b6}
+.tag.red{background:#fee2e2;color:#991b1b}
+</style></head><body>
+<div class="deck">
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: Cover                                            -->
+<!-- ============================================================ -->
+<div class="slide slide-1 active">
+  <div class="chips" style="margin-bottom:30px">
+    <span class="chip">📋 Báo Cáo Tiến Độ</span>
+  </div>
+  <h1>HỆ VI XỬ LÝ 8-BIT<br>Giám Sát & Điều Khiển</h1>
+  <div class="sub">ATmega16 + Intel 8255 + ADC0804 + 74HC4051 + UART</div>
+  <div class="chips">
+    <span class="chip">8 Kênh Thiết Bị</span>
+    <span class="chip">8 Kênh Đo Dòng</span>
+    <span class="chip">Protocol Frame UART</span>
+    <span class="chip">Kiến Trúc 6 Lớp</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: Đặt Vấn Đề & Mục Tiêu  (Bước 1)                 -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Đặt Vấn Đề & Mục Tiêu</h2>
+  <div class="card-row">
+    <!-- Vấn đề -->
+    <div class="card red" style="flex:1">
+      <div class="badge badge-red">✗ Phương pháp cũ</div>
+      <h3>Bài Toán Thực Tế</h3>
+      <ul>
+        <li class="marker-red">Điều khiển relay thủ công, không có phản hồi</li>
+        <li class="marker-red">Không giám sát được dòng điện tiêu thụ thực tế</li>
+        <li class="marker-red">Không phát hiện lỗi: relay kẹt, dây đứt, dòng rò</li>
+        <li class="marker-red">Tủ điện thông thường không tự động hóa</li>
+        <li class="marker-red">Không kết nối được với hệ thống giám sát từ xa</li>
+      </ul>
+    </div>
+    <!-- Đề xuất -->
+    <div class="card green" style="flex:1">
+      <div class="badge badge-done">✓ Đề xuất của nhóm</div>
+      <h3>Giải Pháp Đề Xuất</h3>
+      <ul>
+        <li class="marker-green">Bật/tắt 8 thiết bị từ PC qua giao thức UART</li>
+        <li class="marker-green">Đo dòng điện 8 kênh đồng thời qua ADC0804</li>
+        <li class="marker-green">Phát hiện lỗi tự động: LỖI / CẢNH BÁO / BÌNH THƯỜNG</li>
+        <li class="marker-green">Frame protocol UART có checksum chống nhiễu</li>
+        <li class="marker-green">Kiến trúc firmware 6 lớp — dễ mở rộng</li>
+      </ul>
+    </div>
+    <!-- Mục tiêu -->
+    <div class="card blue" style="flex:1">
+      <div class="badge badge-blue">🎯 Mục tiêu</div>
+      <h3>Mục Tiêu Hệ Thống</h3>
+      <ul>
+        <li>8 kênh điều khiển thiết bị ON/OFF</li>
+        <li>8 kênh đo dòng điện thực (CT Sensor → ADC)</li>
+        <li>Giao tiếp PC ↔ Vi xử lý qua UART 9600bps</li>
+        <li>Phản hồi ACK/NACK cho mỗi lệnh</li>
+        <li>Push dữ liệu cảm biến tự động mỗi ~500ms</li>
+        <li>Thiết kế PCB 2 lớp → sản phẩm thật</li>
+      </ul>
+    </div>
+  </div>
+  <div class="warning-box" style="margin-top:4px">
+    <p>Phạm vi đề tài:</p>
+    <span class="tag">ATmega16 @ 8MHz</span>
+    <span class="tag green">Intel 8255 PPI</span>
+    <span class="tag purple">ADC0804 8-bit</span>
+    <span class="tag">74HC4051 MUX 8:1</span>
+    <span class="tag green">UART Frame Protocol</span>
+    <span class="tag orange">CT Sensor xuyến</span>
+    <span class="tag red">Relay 5V SPDT × 8</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: Sơ Đồ Khối Hệ Thống  (Bước 3)                   -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Sơ Đồ Khối Hệ Thống</h2>
+
+  <!-- Luồng chính -->
+  <p style="font-size:1.1em;color:#475569;margin-bottom:16px">Luồng tín hiệu điều khiển (PC → Thiết bị):</p>
+  <div class="flow">
+    <div class="flow-item" style="flex:1.2">PC<br><span class="sub-label">tool.ps1</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item io">USB-TTL<br><span class="sub-label">UART 9600bps</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item sw">ATmega16<br><span class="sub-label">bit-banging UART</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item hw">8255 PPI<br><span class="sub-label">Port A (8 bit)</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item hw">ULN2803<br><span class="sub-label">Darlington array</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">Relay ×8<br><span class="sub-label">ON / OFF</span></div>
+  </div>
+
+  <!-- Luồng đo -->
+  <p style="font-size:1.1em;color:#475569;margin:24px 0 16px">Luồng đo dòng điện (Cảm biến → PC):</p>
+  <div class="flow">
+    <div class="flow-item" style="flex:1.2">CT Sensor ×8<br><span class="sub-label">Dòng AC</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item hw">74HC4051<br><span class="sub-label">MUX 8:1</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item hw">ADC0804<br><span class="sub-label">8-bit ADC</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item hw">8255 Port B<br><span class="sub-label">đọc 8-bit</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item sw">ATmega16<br><span class="sub-label">Peak 100 mẫu</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item io">UART TX<br><span class="sub-label">9 bytes</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">PC nhận<br><span class="sub-label">hiển thị</span></div>
+  </div>
+
+  <!-- Chú thích -->
+  <div style="display:flex;gap:24px;margin-top:20px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:20px;height:20px;background:#ede9fe;border:2px solid #7c3aed;border-radius:4px"></div>
+      <span style="font-size:.9em;font-weight:600;color:#5b21b6">Phần cứng (Hardware)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:20px;height:20px;background:#dcfce7;border:2px solid #16a34a;border-radius:4px"></div>
+      <span style="font-size:.9em;font-weight:600;color:#166534">Phần mềm (Firmware)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:20px;height:20px;background:#fff7ed;border:2px solid #ea580c;border-radius:4px"></div>
+      <span style="font-size:.9em;font-weight:600;color:#9a3412">Giao tiếp (I/O)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: Tiến Độ Tổng Quan                               -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Tiến Độ Tổng Quan</h2>
+  <div class="card-row">
+    <div class="card blue">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="border:none;margin:0">Hoàn thành dự án</h3>
+        <span style="font-size:2em;font-weight:800;color:#1d4ed8">80%</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:80%"></div></div>
+      <p style="margin-top:14px;font-size:1em;color:#475569">Firmware & Schematic hoàn tất — PCB & sản phẩm thật đang triển khai</p>
+    </div>
+    <div class="card green">
+      <div class="badge badge-done">✓ Đã hoàn thành</div>
+      <ul>
+        <li>Kiến trúc phần mềm 6 lớp</li>
+        <li>Drivers: UART, 8255, ADC0804</li>
+        <li>Memory-mapped I/O (Core Layer)</li>
+        <li>Đo dòng điện 8 kênh (74HC4051)</li>
+        <li>Giao thức UART Frame + Checksum</li>
+        <li>Tool test tự động (tool.ps1)</li>
+        <li>Sơ đồ nguyên lý Proteus</li>
+        <li>BOM 33 linh kiện đầy đủ</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <div class="badge badge-wip">⏳ Đang thực hiện</div>
+      <ul>
+        <li>Thiết kế mạch in PCB 2 lớp</li>
+        <li>Lắp ráp & hàn linh kiện board thật</li>
+        <li>Test end-to-end trên phần cứng thật</li>
+        <li>Quay video demo thực tế</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: Các Công Việc Đã Thực Hiện                      -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Các Công Việc Đã Thực Hiện</h2>
+  <div class="card-row">
+    <div class="card blue">
+      <h3>Giai đoạn 1–2: Nền tảng</h3>
+      <ul>
+        <li>Xây dựng kiến trúc 6 lớp phân tầng rõ ràng</li>
+        <li>Driver UART bit-banging 9600bps trên PC0/PC1</li>
+        <li>Driver 8255: điều khiển WR#/RD#/CS# theo timing diagram</li>
+        <li>Device Service: bitmask <code>uint8_t</code> quản lý 8 thiết bị</li>
+      </ul>
+    </div>
+    <div class="card blue">
+      <h3>Giai đoạn 3–6: Nâng cao</h3>
+      <ul>
+        <li>Memory Map 16-bit: ROM <code>0x0000</code>, RAM <code>0x4000</code>, IO <code>0x8000</code></li>
+        <li>CPU Bus Layer: <code>cpu_bus_read/write(addr)</code></li>
+        <li>ADC0804 qua 8255 Port B/C + MUX 74HC4051 8 kênh</li>
+        <li>Protocol Frame: <code>[AA][CMD][LEN][DATA][CHECKSUM]</code></li>
+        <li>Push định kỳ <code>CMD_SENSOR_DATA</code> (9 byte payload)</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <h3>Phần cứng: Schematic & PCB</h3>
+      <ul>
+        <li>Sơ đồ nguyên lý Proteus đầy đủ 33 linh kiện</li>
+        <li>BOM chi tiết: IC DIP, relay, MUX, ADC, nguồn</li>
+        <li>Sơ đồ nối dây (Wire List): Data bus, control bus, MUX</li>
+        <li>Lưu ý thiết kế PCB: star ground, relay isolation, bypass</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: Nhiệm Vụ 2 Thành Viên                           -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Nhiệm Vụ Từng Thành Viên</h2>
+  <div class="card-row">
+    <div class="card blue">
+      <div class="badge badge-blue">Firmware & ESP32</div>
+      <h3>Thành viên 1</h3>
+      <ul>
+        <li>Thiết kế kiến trúc 6 lớp firmware</li>
+        <li>Viết Core: memory.c, cpu_bus.c, io_map.c</li>
+        <li>Thuật toán đo dòng Peak 100 mẫu</li>
+        <li>Protocol frame + state machine parser</li>
+        <li>Tích hợp ESP32 bridge (MQTT-ready)</li>
+        <li>Viết tool test PowerShell (tool.ps1)</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <div class="badge badge-purple">Hardware & Integration</div>
+      <h3>Thành viên 2</h3>
+      <ul>
+        <li>Sơ đồ nguyên lý Proteus đầy đủ</li>
+        <li>Mạch relay 8 kênh + ULN2803 + diode flyback</li>
+        <li>Thiết kế PCB 2 lớp (layout, gerber)</li>
+        <li>Ghép nối 74HC4051 + ADC0804 với 8255</li>
+        <li>Ánh xạ chân Board Support Package</li>
+        <li>Lắp ráp, hàn linh kiện, test mạch thật</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: Kết Quả Đạt Được                                 -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Kết Quả Đã Đạt Được</h2>
+  <div class="card-row">
+    <div class="card green" style="flex:1.3">
+      <h3>Kết quả kỹ thuật</h3>
+      <ul>
+        <li>✅ Bật/tắt chính xác 8 Relay qua 8255 Port A, phản hồi <code>ACK</code></li>
+        <li>✅ Đo dòng 8 kênh: MUX 74HC4051 → ADC0804 → Port B</li>
+        <li>✅ Frame XOR checksum hoạt động ổn định, lọc nhiễu UART</li>
+        <li>✅ Push tự động <code>CMD_SENSOR_DATA</code> mỗi ~500ms (9 byte)</li>
+        <li>✅ Memory map đúng bản chất vi xử lý: ROM/RAM/IO phân vùng</li>
+        <li>✅ Logic phát hiện lỗi: ON+không dòng = LỖI; OFF+có dòng = CẢNH BÁO</li>
+        <li>✅ Sơ đồ nguyên lý Proteus hoàn chỉnh (33 linh kiện)</li>
+        <li>✅ PCB layout 2 lớp + Gerber file</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>Tiêu chuẩn đạt được</h3>
+      <ul>
+        <li>F_CPU = 8 MHz, UART 9600bps</li>
+        <li>8255 Control Word = <code>0x82</code></li>
+        <li>Kiến trúc: 0 Spaghetti Code</li>
+        <li>Code dễ port sang MCU khác</li>
+        <li>PCB: Star grounding, relay isolation</li>
+        <li>BOM: 33 linh kiện DIP / through-hole</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: Luồng Dữ Liệu End-to-End                        -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Luồng Dữ Liệu End-to-End</h2>
+  <p style="font-size:1.1em;color:#475569;margin-bottom:24px">Từ lệnh điều khiển → phần cứng → phản hồi về PC:</p>
+  <div class="flow">
+    <div class="flow-item">PC gửi<br>Frame UART</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">uart_read<br>bit-banging</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">frame_parse<br>State Machine</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">app_task<br>xử lý CMD</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">device_service<br>bitmask</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">ppi8255<br>Port A</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">Relay<br>ON/OFF</div>
+  </div>
+  <p style="font-size:1.1em;color:#475569;margin:28px 0 16px">Luồng đo dòng (Push Mode ~500ms):</p>
+  <div class="flow">
+    <div class="flow-item">Timer<br>500ms</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">74HC4051<br>chọn kênh</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">ADC0804<br>chuyển đổi</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">Port B<br>đọc 8-bit</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">Peak 100<br>mẫu</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">frame_send<br>CMD=0x04</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">PC nhận<br>9 bytes</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: Kiến Trúc Phần Mềm 6 Lớp                        -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Kiến Trúc Phần Mềm 6 Lớp</h2>
+  <div class="card-row">
+    <div class="card blue" style="flex:1.2">
+      <h3>Phân tầng (Top → Bottom)</h3>
+      <div style="font-family:monospace;font-size:1em;background:#1e3a8a;color:#93c5fd;border-radius:12px;padding:20px;line-height:2">
+        <div style="color:#fff;font-weight:700">main.c</div>
+        <div style="color:#bfdbfe">  └── app/ (điều phối)</div>
+        <div style="color:#93c5fd">       ├── protocol/ (frame, command)</div>
+        <div style="color:#93c5fd">       ├── services/ (device, measurement)</div>
+        <div style="color:#93c5fd">       └── core/ (memory, cpu_bus, io_map)</div>
+        <div style="color:#60a5fa">            └── drivers/ (uart, 8255, adc0804)</div>
+        <div style="color:#3b82f6">                 └── bsp/ + config/</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Nguyên tắc thiết kế</h3>
+      <ul>
+        <li>Mỗi lớp chỉ gọi lớp ngay bên dưới</li>
+        <li>Tách biệt hoàn toàn logic và phần cứng</li>
+        <li><code>cpu_bus_write(0x8000, val)</code> → 8255 Port A</li>
+        <li>Thay MCU chỉ cần sửa BSP layer</li>
+        <li>Zero Spaghetti Code</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: Giao Thức UART Frame                           -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Giao Thức UART Frame</h2>
+  <div class="card-row">
+    <div class="card blue" style="flex:1.4">
+      <h3>Cấu trúc Frame</h3>
+      <div style="font-family:monospace;background:#1e3a8a;color:#93c5fd;border-radius:12px;padding:20px;font-size:1.1em;text-align:center;letter-spacing:2px;line-height:2.5">
+        <span style="background:#1d4ed8;padding:8px 14px;border-radius:6px;color:#fff">AA</span>
+        <span style="margin:0 8px;color:#64748b">│</span>
+        <span style="background:#0f766e;padding:8px 14px;border-radius:6px;color:#fff">CMD</span>
+        <span style="margin:0 8px;color:#64748b">│</span>
+        <span style="background:#7c3aed;padding:8px 14px;border-radius:6px;color:#fff">LEN</span>
+        <span style="margin:0 8px;color:#64748b">│</span>
+        <span style="background:#b45309;padding:8px 14px;border-radius:6px;color:#fff">DATA...</span>
+        <span style="margin:0 8px;color:#64748b">│</span>
+        <span style="background:#dc2626;padding:8px 14px;border-radius:6px;color:#fff">XOR</span>
+        <p style="margin-top:12px;color:#93c5fd;font-size:.85em">Header │ Command │ Length │ Payload │ Checksum</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Bộ lệnh</h3>
+      <table>
+        <tr><th>CMD</th><th>Tên</th><th>Mô tả</th></tr>
+        <tr><td><code>0x01</code></td><td>SET_ALL</td><td>Đặt 8 thiết bị</td></tr>
+        <tr><td><code>0x02</code></td><td>SET_SINGLE</td><td>Bật/tắt 1 thiết bị</td></tr>
+        <tr><td><code>0x04</code></td><td>SENSOR_DATA</td><td>Push 9 byte dòng điện</td></tr>
+        <tr><td><code>0x81</code></td><td>ACK</td><td>Phản hồi OK</td></tr>
+        <tr><td><code>0x82</code></td><td>NACK</td><td>Phản hồi lỗi</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: Minh Chứng – Tool Test                          -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Minh Chứng – Tool Test (tool.ps1)</h2>
+  <div class="card-row">
+    <div class="card" style="flex:1.3">
+      <h3>Lệnh test tự động</h3>
+      <div style="font-family:monospace;background:#0f172a;color:#4ade80;border-radius:12px;padding:24px;font-size:1em;line-height:2">
+        <div style="color:#94a3b8"># Bật thiết bị số 2</div>
+        <div><span style="color:#818cf8">PS></span> ./tool.ps1 -Cmd single -Idx 2 -State 1</div>
+        <div style="color:#4ade80">[OK] Send: AA 02 02 02 01 A9</div>
+        <div style="color:#4ade80">[OK] ACK received</div>
+        <br>
+        <div style="color:#94a3b8"># Giám sát dòng điện liên tục</div>
+        <div><span style="color:#818cf8">PS></span> ./tool.ps1 -Cmd monitor</div>
+        <div style="color:#f59e0b">[DATA] CMD=0x04 Len=9</div>
+        <div style="color:#38bdf8">I0=1.2A I1=0.0A I2=0.5A</div>
+        <div style="color:#38bdf8">I3=0.8A I4=0.0A ... State=0x05</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Logic phát hiện lỗi</h3>
+      <table>
+        <tr><th>Lệnh</th><th>Dòng điện</th><th>Kết luận</th></tr>
+        <tr><td>BẬT</td><td>Có dòng</td><td style="color:#166534;font-weight:700">✓ Bình thường</td></tr>
+        <tr><td>BẬT</td><td>= 0</td><td style="color:#dc2626;font-weight:700">✗ LỖI thiết bị</td></tr>
+        <tr><td>TẮT</td><td>= 0</td><td style="color:#166534;font-weight:700">✓ Bình thường</td></tr>
+        <tr><td>TẮT</td><td>Có dòng</td><td style="color:#b45309;font-weight:700">⚠ Dòng rò</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: Thiết Kế Mạch Mô Phỏng Proteus                 -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Sơ Đồ Mạch Nguyên Lý</h2>
+    <div style="text-align:center;margin-top:4px;margin-bottom:-8px">
+    <img src="../images/DoAn.SVG"
+         alt="Sơ đồ mạch nguyên lý Proteus"
+         style="max-width:100%;height:auto;border:2px solid #334155;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.3)" />
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: Đánh Giá & Kế Hoạch Còn Lại                   -->
+<!-- ============================================================ -->
+<div class="slide slide-n">
+  <h2>Đánh Giá & Kế Hoạch</h2>
+  <div class="card-row">
+    <div class="card green">
+      <h3>Đánh Giá Tiến Độ</h3>
+      <ul>
+        <li>Firmware 6 lớp hoàn tất 100%</li>
+        <li>Schematic Proteus + BOM đầy đủ</li>
+        <li>Giao thức UART hoạt động ổn định</li>
+        <li>Code đạt chuẩn kiến trúc công nghiệp</li>
+      </ul>
+      <div style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;font-weight:600;margin-bottom:6px">
+          <span>Tiến độ tổng thể</span><span style="color:#166534">60%</span>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:60%;background:linear-gradient(90deg,#059669,#10b981)"></div></div>
+      </div>
+    </div>
+    <div class="card orange">
+      <h3>📅 Công việc còn lại</h3>
+      <ul>
+        <li>Đặt board PCB (2 lớp, nhà sản xuất)</li>
+        <li>Hàn & lắp ráp linh kiện lên board thật</li>
+        <li>Nạp firmware qua ISP, test relay & ADC thật</li>
+        <li>Stress test 24h trên phần cứng thật</li>
+        <li>Quay video demo end-to-end 2–3 phút</li>
+        <li>Hoàn thiện slide & kịch bản bảo vệ</li>
+      </ul>
+    </div>
+    <div class="card yellow">
+      <h3>📋 Kịch bản bảo vệ</h3>
+      <ul>
+        <li>Trình bày tổng quan: 3–5 phút</li>
+        <li>Demo phần cứng thật: 2–3 phút</li>
+        <li>Giải đáp phản biện: 5–10 phút</li>
+        <li>Chuẩn bị câu hỏi dự kiến từ hội đồng</li>
+        <li>Mang theo board thật + schematic in</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: Cảm ơn                                         -->
+<!-- ============================================================ -->
+<div class="slide last-slide">
+  <h1>Cảm ơn Thầy/Cô!</h1>
+  <p>Nhóm sẵn sàng trả lời câu hỏi phản biện</p>
+  <div style="display:flex;gap:20px;margin-top:40px;flex-wrap:wrap;justify-content:center">
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:10px 22px;font-size:1.1em">ATmega16 + 8255</span>
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:10px 22px;font-size:1.1em">ADC0804 + 74HC4051</span>
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:10px 22px;font-size:1.1em">UART Frame Protocol</span>
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:10px 22px;font-size:1.1em">Kiến Trúc 6 Lớp</span>
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:10px 22px;font-size:1.1em">Schematic Proteus</span>
+  </div>
+</div>
+
+</div>
+
+<div class="counter"><span id="cur">1</span> / <span id="tot"></span></div>
+
+<script>
+const slides=document.querySelectorAll('.slide');
+let cur=0;
+document.getElementById('tot').textContent=slides.length;
+function show(n){slides[cur].classList.remove('active');cur=n;slides[cur].classList.add('active');document.getElementById('cur').textContent=cur+1;}
+function next(){if(cur<slides.length-1)show(cur+1);}
+function prev(){if(cur>0)show(cur-1);}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')next();if(e.key==='ArrowLeft'||e.key==='ArrowUp')prev();});
+</script>
+</body></html>
