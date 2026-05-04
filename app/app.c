@@ -34,7 +34,7 @@ void app_task() {
       if (frame_parse_byte(byte, &frame)) {
         if (frame.cmd == CMD_SET_ALL && frame.len == 1) {
           device_service_set_all(frame.data[0]);
-          uart_write_string("ACK\r\n");
+          uart_write_string("ACK\r\n"); 
         } else if (frame.cmd == CMD_SET_SINGLE && frame.len == 2) {
           uint8_t index = frame.data[0];
           uint8_t value = frame.data[1];
