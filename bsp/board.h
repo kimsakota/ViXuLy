@@ -4,9 +4,9 @@
 #include <avr/io.h>
 
 // 8255 data bus
-#define PPI_DATA_DDR DDRD // Thanh ghi hướng dữ liệu cho cổng D (Data Bus)
-#define PPI_DATA_PORT PORTD // Thanh ghi xuất dữ liệu cho cổng D (Data Bus)
-#define PPI_DATA_PIN PIND // Thanh ghi đọc dữ liệu từ cổng D (Data Bus)
+#define PPI_DATA_DDR DDRA // Thanh ghi hướng dữ liệu cho cổng A (Data Bus)
+#define PPI_DATA_PORT PORTA // Thanh ghi xuất dữ liệu cho cổng A (Data Bus)
+#define PPI_DATA_PIN PINA // Thanh ghi đọc dữ liệu từ cổng A (Data Bus)
 
 // Connection between PPI and ATmega (Control Bus)
 #define PPI_CTRL_DDR DDRB
@@ -32,14 +32,16 @@
 #define PPI_ADC_MUX_C_BIT 6  // PC6 -> 74HC4051 C
 
 // ===== UART SOFT =====
-#define UART_DDR DDRC 
-#define UART_PORT PORTC 
-#define UART_PIN PINC
+// Theo schematic: UART nằm trên Port D (Port C của ATmega bỏ trống).
+#define UART_DDR DDRD
+#define UART_PORT PORTD
+#define UART_PIN PIND
 
 // Connection between UART and ATmega (TX/RX)
-// PC0 is TX (Output), PC1 is RX (Input)
-// Virtual Terminal TXD -> PC1, RXD -> PC0
-#define UART_TX_PIN PC0
-#define UART_RX_PIN PC1
+// PD1 is TX (Output), PD0 is RX (Input)
+// Virtual Terminal RXD <- PD1 (TX), TXD -> PD0 (RX)
+// Lưu ý: PD2 = INTR_0804 (chân ~INTR của ADC0804), không dùng cho UART.
+#define UART_TX_PIN PD1
+#define UART_RX_PIN PD0
 
 #endif /* BOARD_H_ */

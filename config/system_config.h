@@ -18,6 +18,10 @@
 #define MEM_8255_START       0x8000 // Địa chỉ bắt đầu của 8255 PPI, thường được ánh xạ vào một vùng địa chỉ riêng để truy cập các cổng I/O
 #define MEM_8255_END         0x8003 // Địa chỉ kết thúc của 8255 PPI, bao gồm 3 cổng dữ liệu và 1 cổng điều khiển
 
-#define  DEVICE_COUNT		8 // Số lượng thiết bị được điều khiển, tương ứng với 8 bit của cổng A, B, C của 8255 PPI
+// Giữ = 8 để cố định payload protocol (9 byte) tương thích BackEnd/AppMobile.
+// LƯU Ý phần cứng (theo schematic): hiện chỉ đấu 4 tải (8255 PA0..PA3 = OFF1..OFF4)
+// và 4 kênh đo (74HC4051 A0..A3 = X0..X3). PA4..PA7 và kênh X4..X7 bỏ trống;
+// app.c đã gate đọc ADC theo device_state nên kênh trống không gây số liệu sai.
+#define  DEVICE_COUNT		8 // Số thiết bị firmware quản lý (4 kênh đầu được đấu thực tế trong mạch)
 
 #endif /* SYSTEM_CONFIG_H_ */
